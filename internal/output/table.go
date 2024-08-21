@@ -1,10 +1,12 @@
 package output
 
 import (
+	"errors"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/jedib0t/go-pretty/table"
 )
 
@@ -13,11 +15,11 @@ type Table struct {
 	Rows   []table.Row
 }
 
-func toTable(data any) (Table, error) {
+func toTable(data any) (*Table, error) {
 	tableData := Table{}
 
 	switch data := data.(type) {
-	case []types.KeyValueStore:
+	case []cfTypes.KeyValueStore:
 		// List of CloudFront Key Value Stores
 		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
 		for _, kvs := range data {
@@ -30,9 +32,23 @@ func toTable(data any) (Table, error) {
 					aws.ToString(kvs.Status),
 					aws.ToString(kvs.ARN)})
 		}
+
+	case []kvsTypes.ListKeysResponseListItem:
+		// List of Items in the Key Value Store
+		tableData.Header = table.Row{"Key", "Value"}
+		for _, item := range data {
+			tableData.Rows = append(
+				tableData.Rows,
+				table.Row{
+					aws.ToString(item.Key),
+					aws.ToString(item.Value)})
+		}
+
+	default:
+		return nil, errors.New("unsupported data type")
 	}
 
-	return tableData, nil
+	return &tableData, nil
 }
 
 func RenderAsTable(data any) error {

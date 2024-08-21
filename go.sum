@@ -20,8 +20,12 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.16 h1:jYfy8UPmd+6kJW5YhY
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.16/go.mod h1:7ZfEPZxkW42Afq4uQB8H2E2e6ebh6mXTueEpYzjCzcs=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.1 h1:VaRN3TlFdd6KxX1x3ILT5ynH6HvKgqdiXoTxAF4HQcQ=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.1/go.mod h1:FbtygfRFze9usAadmnGJNc8KsP346kEe+y2/oyhGAGc=
+github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.16 h1:mimdLQkIX1zr8GIPY1ZtALdBQGxcASiBd2MOp8m/dMc=
+github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.16/go.mod h1:YHk6owoSwrIsok+cAH9PENCOGoH5PU2EllX4vLtSrsY=
 github.com/aws/aws-sdk-go-v2/service/cloudfront v1.38.5 h1:t7ZIhyAbD9zDH7rzEuUIagnPz6dJRB8HesgygHUbpsc=
 github.com/aws/aws-sdk-go-v2/service/cloudfront v1.38.5/go.mod h1:Jnkkf+olxCcacqhQIjY8BlG4JL2/ZsPLsiBh6xnNsu4=
+github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore v1.6.4 h1:Mj+ad+2ZCY70qK0Sy9AzV6eFq4N9S7/71kIL8rGVEmg=
+github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore v1.6.4/go.mod h1:XpDzl3uk2H3Zf1+cz1453VJnHu492LUB8f/poRWObd0=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.4 h1:KypMCbLPPHEmf9DgMGw51jMj77VfGPAN2Kv4cfhlfgI=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.4/go.mod h1:Vz1JQXliGcQktFTN/LN6uGppAIRoLBR2bMvIMP0gOjc=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.18 h1:tJ5RnkHCiSH0jyd6gROjlJtNwov0eGYNz8s8nFcR0jQ=
