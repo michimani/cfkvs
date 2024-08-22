@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
 	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/jedib0t/go-pretty/table"
 )
@@ -43,6 +44,15 @@ func toTable(data any) (*Table, error) {
 					aws.ToString(item.Key),
 					aws.ToString(item.Value)})
 		}
+
+	case *kvs.GetKeyOutput:
+		// An item in the Key Value Store
+		tableData.Header = table.Row{"Key", "Value"}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{
+				aws.ToString(data.Key),
+				aws.ToString(data.Value)})
 
 	default:
 		return nil, errors.New("unsupported data type")

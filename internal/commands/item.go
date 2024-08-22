@@ -35,23 +35,32 @@ type DeleteSubCmd struct {
 	Key     string `arg:"" name:"key" help:"Key of the item to delete." required:""`
 }
 
+func getKvsArn(ctx context.Context, kvsName string) (string, error) {
+	cfc, err := libs.NewCloudFrontClient(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	kvsARN, err := libs.GetKeyValueStoreArn(ctx, cfc, kvsName)
+	if err != nil {
+		return "", err
+	}
+
+	return kvsARN, nil
+}
+
 func (c *ListItemsSubCmd) Run(globals *Globals) error {
 	if c.KvsName == "" {
 		return errors.New("kvs-name is required")
 	}
 
 	ctx := context.TODO()
-	cfc, err := libs.NewCloudFrontClient(ctx)
-	if err != nil {
-		return err
-	}
-
 	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	kvsARN, err := libs.GetKeyValueStoreArn(ctx, cfc, c.KvsName)
+	kvsARN, err := getKvsArn(ctx, c.KvsName)
 	if err != nil {
 		return err
 	}
@@ -62,6 +71,37 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 	}
 
 	if err := output.RenderAsTable(itemList); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *GetSubCmd) Run(globals *Globals) error {
+	if c.KvsName == "" {
+		return errors.New("kvs-name is required")
+	}
+	if c.Key == "" {
+		return errors.New("key is required")
+	}
+
+	ctx := context.TODO()
+	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	kvsARN, err := getKvsArn(ctx, c.KvsName)
+	if err != nil {
+		return err
+	}
+
+	item, err := libs.GetItem(ctx, kvsc, kvsARN, c.Key)
+	if err != nil {
+		return err
+	}
+
+	if err := output.RenderAsTable(item); err != nil {
 		return err
 	}
 
