@@ -107,3 +107,37 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 
 	return nil
 }
+
+func (c *PutSubCmd) Run(globals *Globals) error {
+	if c.KvsName == "" {
+		return errors.New("kvs-name is required")
+	}
+	if c.Key == "" {
+		return errors.New("key is required")
+	}
+	if c.Value == "" {
+		return errors.New("value is required")
+	}
+
+	ctx := context.TODO()
+	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	kvsARN, err := getKvsArn(ctx, c.KvsName)
+	if err != nil {
+		return err
+	}
+
+	res, err := libs.PutItem(ctx, kvsc, kvsARN, c.Key, c.Value)
+	if err != nil {
+		return err
+	}
+
+	if err := output.RenderAsTable(res); err != nil {
+		return err
+	}
+
+	return nil
+}

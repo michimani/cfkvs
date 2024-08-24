@@ -54,6 +54,15 @@ func toTable(data any) (*Table, error) {
 				aws.ToString(data.Key),
 				aws.ToString(data.Value)})
 
+	case *kvs.PutKeyOutput:
+		// Put an item in the Key Value Store
+		tableData.Header = table.Row{"ItemCount", "TotalSize (bytes)"}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{
+				aws.ToInt32(data.ItemCount),
+				aws.ToInt64(data.TotalSizeInBytes)})
+
 	default:
 		return nil, errors.New("unsupported data type")
 	}

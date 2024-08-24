@@ -22,6 +22,7 @@ func NewCloudFrontKeyValueStoreClient(ctx context.Context) (*kvs.Client, error) 
 type CloudFrontKeyValueStoreClient interface {
 	ListKeys(ctx context.Context, params *kvs.ListKeysInput, optFns ...func(*kvs.Options)) (*kvs.ListKeysOutput, error)
 	GetKey(ctx context.Context, params *kvs.GetKeyInput, optFns ...func(*kvs.Options)) (*kvs.GetKeyOutput, error)
+	PutKey(ctx context.Context, params *kvs.PutKeyInput, optFns ...func(*kvs.Options)) (*kvs.PutKeyOutput, error)
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
@@ -48,4 +49,36 @@ func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key s
 	}
 
 	return out, nil
+}
+
+func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, value string) (*kvs.PutKeyOutput, error) {
+	eTag, err := getETag(ctx, c, kvsARN)
+	if err != nil {
+		return nil, err
+	}
+
+	input := &kvs.PutKeyInput{
+		IfMatch: eTag,
+		KvsARN:  aws.String(kvsARN),
+		Key:     aws.String(key),
+		Value:   aws.String(value),
+	}
+	out, err := c.PutKey(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func getETag(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {
+	input := &kvs.DescribeKeyValueStoreInput{
+		KvsARN: aws.String(kvsARN),
+	}
+	out, err := c.DescribeKeyValueStore(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return out.ETag, nil
 }
