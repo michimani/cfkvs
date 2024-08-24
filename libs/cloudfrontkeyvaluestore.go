@@ -23,6 +23,7 @@ type CloudFrontKeyValueStoreClient interface {
 	ListKeys(ctx context.Context, params *kvs.ListKeysInput, optFns ...func(*kvs.Options)) (*kvs.ListKeysOutput, error)
 	GetKey(ctx context.Context, params *kvs.GetKeyInput, optFns ...func(*kvs.Options)) (*kvs.GetKeyOutput, error)
 	PutKey(ctx context.Context, params *kvs.PutKeyInput, optFns ...func(*kvs.Options)) (*kvs.PutKeyOutput, error)
+	DeleteKey(ctx context.Context, params *kvs.DeleteKeyInput, optFns ...func(*kvs.Options)) (*kvs.DeleteKeyOutput, error)
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
@@ -64,6 +65,26 @@ func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, 
 		Value:   aws.String(value),
 	}
 	out, err := c.PutKey(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.DeleteKeyOutput, error) {
+	eTag, err := getETag(ctx, c, kvsARN)
+	if err != nil {
+		return nil, err
+	}
+
+	input := &kvs.DeleteKeyInput{
+		IfMatch: eTag,
+		KvsARN:  aws.String(kvsARN),
+		Key:     aws.String(key),
+	}
+
+	out, err := c.DeleteKey(ctx, input)
 	if err != nil {
 		return nil, err
 	}
