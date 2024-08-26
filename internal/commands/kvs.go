@@ -36,3 +36,22 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 
 	return nil
 }
+
+func (c *CreateSubCmd) Run(globals *Globals) error {
+	cfc, err := libs.NewCloudFrontClient(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	// TODO: import from S3
+	kvs, err := libs.CreateKvs[libs.KVSImportSourceS3](context.TODO(), cfc, c.Name, c.Comment, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := output.RenderAsTable(kvs); err != nil {
+		return err
+	}
+
+	return nil
+}

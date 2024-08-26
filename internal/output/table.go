@@ -20,6 +20,18 @@ func toTable(data any) (*Table, error) {
 	tableData := Table{}
 
 	switch data := data.(type) {
+	case *cfTypes.KeyValueStore:
+		// CloudFront Key Value Store
+		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{
+				aws.ToString(data.Id),
+				aws.ToString(data.Name),
+				aws.ToString(data.Comment),
+				aws.ToString(data.Status),
+				aws.ToString(data.ARN)})
+
 	case []cfTypes.KeyValueStore:
 		// List of CloudFront Key Value Stores
 		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
