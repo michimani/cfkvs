@@ -70,7 +70,7 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(itemList); err != nil {
+	if err := output.Render(itemList, globals.Output); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(item); err != nil {
+	if err := output.Render(item, globals.Output); err != nil {
 		return err
 	}
 
@@ -135,7 +135,7 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(res); err != nil {
+	if err := output.Render(res, globals.Output); err != nil {
 		return err
 	}
 
@@ -166,7 +166,7 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(res); err != nil {
+	if err := output.Render(res, globals.Output); err != nil {
 		return err
 	}
 

@@ -30,7 +30,7 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(kvsList); err != nil {
+	if err := output.Render(kvsList, globals.Output); err != nil {
 		return err
 	}
 
@@ -49,7 +49,7 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.RenderAsTable(kvs); err != nil {
+	if err := output.Render(kvs, globals.Output); err != nil {
 		return err
 	}
 
