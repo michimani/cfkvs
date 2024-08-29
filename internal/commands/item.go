@@ -16,23 +16,23 @@ type ItemCmd struct {
 }
 
 type ListItemsSubCmd struct {
-	KvsName string `arg:"" name:"kvs-name" help:"Name of the key value store." required:""`
+	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
 }
 
 type GetSubCmd struct {
-	KvsName string `arg:"" name:"kvs-name" help:"Name of the key value store." required:""`
-	Key     string `arg:"" name:"key" help:"Key of the item to get." required:""`
+	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	Key     string `name:"key" help:"Key of the item to get." required:""`
 }
 
 type PutSubCmd struct {
-	KvsName string `arg:"" name:"kvs-name" help:"Name of the key value store." required:""`
-	Key     string `arg:"" name:"key" help:"Key of the item to put." required:""`
-	Value   string `arg:"" name:"value" help:"Value of the item to put." required:""`
+	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	Key     string `name:"key" help:"Key of the item to put." required:""`
+	Value   string `name:"value" help:"Value of the item to put." required:""`
 }
 
 type DeleteSubCmd struct {
-	KvsName string `arg:"" name:"kvs-name" help:"Name of the key value store." required:""`
-	Key     string `arg:"" name:"key" help:"Key of the item to delete." required:""`
+	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	Key     string `name:"key" help:"Key of the item to delete." required:""`
 }
 
 func getKvsArn(ctx context.Context, kvsName string) (string, error) {

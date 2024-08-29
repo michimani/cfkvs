@@ -15,8 +15,8 @@ type KvsCmd struct {
 type ListKvsSubCmd struct{}
 
 type CreateSubCmd struct {
-	Name    string `arg:"" name:"name" help:"Name of the key value store." required:""`
-	Comment string `arg:"" name:"comment" help:"Comment of the key value store."`
+	Name    string `name:"name" help:"Name of the key value store." required:""`
+	Comment string `name:"comment" help:"Comment of the key value store."`
 }
 
 func (c *ListKvsSubCmd) Run(globals *Globals) error {
