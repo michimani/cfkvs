@@ -62,22 +62,24 @@ type KVSImportSourceS3 struct {
 }
 
 func (s3 KVSImportSourceS3) ARN() string {
-	return fmt.Sprintf("arn:aws:s3:::%s%s", s3.Bucket, s3.Key)
+	return fmt.Sprintf("arn:aws:s3:::%s/%s", s3.Bucket, s3.Key)
 }
 
 func (s3 KVSImportSourceS3) Type() types.ImportSourceType {
 	return types.ImportSourceTypeS3
 }
 
-func CreateKvs[T KVSImportSource](ctx context.Context, c CloudFrontClient, name string, comment string, source *T) (*types.KeyValueStore, error) {
+func CreateKvs(ctx context.Context, c CloudFrontClient, name string, comment string, source KVSImportSource) (*types.KeyValueStore, error) {
 	input := &cloudfront.CreateKeyValueStoreInput{
 		Name:    aws.String(name),
 		Comment: aws.String(comment),
 	}
 
 	if source != nil {
-		input.ImportSource.SourceARN = aws.String((*source).ARN())
-		input.ImportSource.SourceType = (*source).Type()
+		input.ImportSource = &types.ImportSource{
+			SourceARN:  aws.String(source.ARN()),
+			SourceType: source.Type(),
+		}
 	}
 
 	out, err := c.CreateKeyValueStore(ctx, input)
