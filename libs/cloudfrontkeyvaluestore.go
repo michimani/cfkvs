@@ -6,7 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
-	"github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
+	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
+	"github.com/michimani/cfkvs/types"
 )
 
 func NewCloudFrontKeyValueStoreClient(ctx context.Context) (*kvs.Client, error) {
@@ -24,19 +25,15 @@ type CloudFrontKeyValueStoreClient interface {
 	GetKey(ctx context.Context, params *kvs.GetKeyInput, optFns ...func(*kvs.Options)) (*kvs.GetKeyOutput, error)
 	PutKey(ctx context.Context, params *kvs.PutKeyInput, optFns ...func(*kvs.Options)) (*kvs.PutKeyOutput, error)
 	DeleteKey(ctx context.Context, params *kvs.DeleteKeyInput, optFns ...func(*kvs.Options)) (*kvs.DeleteKeyOutput, error)
+	UpdateKeys(ctx context.Context, params *kvs.UpdateKeysInput, optFns ...func(*kvs.Options)) (*kvs.UpdateKeysOutput, error)
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
-func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) ([]types.ListKeysResponseListItem, error) {
+func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*kvs.ListKeysOutput, error) {
 	input := &kvs.ListKeysInput{
 		KvsARN: aws.String(kvsARN),
 	}
-	out, err := c.ListKeys(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.Items, nil
+	return c.ListKeys(ctx, input)
 }
 
 func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.GetKeyOutput, error) {
@@ -44,12 +41,7 @@ func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key s
 		KvsARN: aws.String(kvsARN),
 		Key:    aws.String(key),
 	}
-	out, err := c.GetKey(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return c.GetKey(ctx, input)
 }
 
 func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, value string) (*kvs.PutKeyOutput, error) {
@@ -64,12 +56,7 @@ func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, 
 		Key:     aws.String(key),
 		Value:   aws.String(value),
 	}
-	out, err := c.PutKey(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return c.PutKey(ctx, input)
 }
 
 func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.DeleteKeyOutput, error) {
@@ -84,12 +71,38 @@ func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, ke
 		Key:     aws.String(key),
 	}
 
-	out, err := c.DeleteKey(ctx, input)
+	return c.DeleteKey(ctx, input)
+}
+
+func SyncItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string, putList, deleteList []types.Item) (*kvs.UpdateKeysOutput, error) {
+	puts := []kvsTypes.PutKeyRequestListItem{}
+	for _, item := range putList {
+		puts = append(puts, kvsTypes.PutKeyRequestListItem{
+			Key:   aws.String(item.Key),
+			Value: aws.String(item.Value),
+		})
+	}
+
+	delete := []kvsTypes.DeleteKeyRequestListItem{}
+	for _, item := range deleteList {
+		delete = append(delete, kvsTypes.DeleteKeyRequestListItem{
+			Key: aws.String(item.Key),
+		})
+	}
+
+	eTag, err := getETag(ctx, c, kvsARN)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
+	input := &kvs.UpdateKeysInput{
+		KvsARN:  aws.String(kvsARN),
+		Puts:    puts,
+		Deletes: delete,
+		IfMatch: eTag,
+	}
+
+	return c.UpdateKeys(ctx, input)
 }
 
 func getETag(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {

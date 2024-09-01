@@ -6,6 +6,7 @@ import (
 
 	"github.com/michimani/cfkvs/internal/output"
 	"github.com/michimani/cfkvs/libs"
+	"github.com/michimani/cfkvs/types"
 )
 
 type KvsCmd struct {
@@ -28,12 +29,17 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	kvsList, err := libs.ListKvs(context.TODO(), cfc)
+	out, err := libs.ListKvs(context.TODO(), cfc)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(kvsList, globals.Output); err != nil {
+	kvsList := types.KVSList{}
+	if err := kvsList.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&kvsList, globals.Output); err != nil {
 		return err
 	}
 
@@ -58,12 +64,17 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		}
 	}
 
-	kvs, err := libs.CreateKvs(context.TODO(), cfc, c.Name, c.Comment, srcS3)
+	out, err := libs.CreateKvs(context.TODO(), cfc, c.Name, c.Comment, srcS3)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(kvs, globals.Output); err != nil {
+	kvs := types.KVS{}
+	if err := kvs.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&kvs, globals.Output); err != nil {
 		return err
 	}
 

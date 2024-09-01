@@ -41,14 +41,9 @@ func GetKeyValueStoreArn(ctx context.Context, c CloudFrontClient, kvsName string
 	return "", fmt.Errorf("the key value store '%s' is not found", kvsName)
 }
 
-func ListKvs(ctx context.Context, c CloudFrontClient) ([]types.KeyValueStore, error) {
+func ListKvs(ctx context.Context, c CloudFrontClient) (*cloudfront.ListKeyValueStoresOutput, error) {
 	input := &cloudfront.ListKeyValueStoresInput{}
-	out, err := c.ListKeyValueStores(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.KeyValueStoreList.Items, nil
+	return c.ListKeyValueStores(ctx, input)
 }
 
 type KVSImportSource interface {
@@ -69,7 +64,7 @@ func (s3 KVSImportSourceS3) Type() types.ImportSourceType {
 	return types.ImportSourceTypeS3
 }
 
-func CreateKvs(ctx context.Context, c CloudFrontClient, name string, comment string, source KVSImportSource) (*types.KeyValueStore, error) {
+func CreateKvs(ctx context.Context, c CloudFrontClient, name string, comment string, source KVSImportSource) (*cloudfront.CreateKeyValueStoreOutput, error) {
 	input := &cloudfront.CreateKeyValueStoreInput{
 		Name:    aws.String(name),
 		Comment: aws.String(comment),
@@ -82,10 +77,5 @@ func CreateKvs(ctx context.Context, c CloudFrontClient, name string, comment str
 		}
 	}
 
-	out, err := c.CreateKeyValueStore(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.KeyValueStore, nil
+	return c.CreateKeyValueStore(ctx, input)
 }

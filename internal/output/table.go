@@ -1,108 +1,164 @@
 package output
 
 import (
-	"errors"
+	"fmt"
 	"os"
+	"reflect"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
-	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
-	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/michimani/cfkvs/types"
 )
 
 type Table struct {
-	Header table.Row
-	Rows   []table.Row
+	// Descriptions of the table
+	// These descriptions will render raw text before the table
+	Descriptions []string
+
+	Headers []table.Row
+	Rows    []table.Row
 }
 
-func toTable(data any) (*Table, error) {
+func toTables(data any) ([]Table, error) {
 	tableData := Table{}
 
 	switch data := data.(type) {
-	case *cfTypes.KeyValueStore:
+	case *types.KVS:
 		// CloudFront Key Value Store
-		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
+		tableData.Headers = []table.Row{{"ID", "Name", "Comment", "Status", "ARN"}}
 		tableData.Rows = append(
 			tableData.Rows,
-			table.Row{
-				aws.ToString(data.Id),
-				aws.ToString(data.Name),
-				aws.ToString(data.Comment),
-				aws.ToString(data.Status),
-				aws.ToString(data.ARN)})
+			table.Row{data.Id, data.Name, data.Comment, data.Status, data.ARN})
+		return []Table{tableData}, nil
 
-	case []cfTypes.KeyValueStore:
+	case *types.KVSList:
 		// List of CloudFront Key Value Stores
-		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
-		for _, kvs := range data {
+		tableData.Headers = []table.Row{{"ID", "Name", "Comment", "Status", "ARN"}}
+		for _, kvs := range *data {
 			tableData.Rows = append(
 				tableData.Rows,
-				table.Row{
-					aws.ToString(kvs.Id),
-					aws.ToString(kvs.Name),
-					aws.ToString(kvs.Comment),
-					aws.ToString(kvs.Status),
-					aws.ToString(kvs.ARN)})
+				table.Row{kvs.Id, kvs.Name, kvs.Comment, kvs.Status, kvs.ARN})
 		}
+		return []Table{tableData}, nil
 
-	case []kvsTypes.ListKeysResponseListItem:
+	case *types.ItemList:
 		// List of Items in the Key Value Store
-		tableData.Header = table.Row{"Key", "Value"}
-		for _, item := range data {
+		tableData.Headers = []table.Row{{"Key", "Value"}}
+		for _, item := range data.Data {
 			tableData.Rows = append(
 				tableData.Rows,
-				table.Row{
-					aws.ToString(item.Key),
-					aws.ToString(item.Value)})
+				table.Row{item.Key, item.Value})
+		}
+		return []Table{tableData}, nil
+
+	case *types.Item:
+		// An item in the Key Value Store
+		tableData.Headers = []table.Row{{"Key", "Value"}}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{data.Key, data.Value})
+		return []Table{tableData}, nil
+
+	case *types.KVSSimple:
+		// Put an item in the Key Value Store
+		tableData.Headers = []table.Row{{"ItemCount", "TotalSizeInBytes"}}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{data.ItemCount, data.TotalSize})
+		return []Table{tableData}, nil
+
+	case *types.ItemListDiff:
+		// List of Item differences in the Key Value Store
+		tables := []Table{}
+
+		// Add
+		if len(data.Add) == 0 {
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[ADDED] No items will be added."},
+			})
+		} else {
+			addHeaders := []table.Row{
+				{"#", "Key", "Value"},
+			}
+			addRows := []table.Row{}
+			for i, diff := range data.Add {
+				addRows = append(addRows, table.Row{i + 1, diff.After.Key, diff.After.Value})
+			}
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[ADDED] Following items will be added."},
+				Headers:      addHeaders,
+				Rows:         addRows})
 		}
 
-	case *kvs.GetKeyOutput:
-		// An item in the Key Value Store
-		tableData.Header = table.Row{"Key", "Value"}
-		tableData.Rows = append(
-			tableData.Rows,
-			table.Row{
-				aws.ToString(data.Key),
-				aws.ToString(data.Value)})
+		// Update
+		if len(data.Update) == 0 {
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[UPDATED] No items will be updated."},
+			})
+		} else {
+			updateHeaders := []table.Row{
+				{"#", "Key", "Before Value", "After Value"},
+			}
 
-	case *kvs.PutKeyOutput:
-		// Put an item in the Key Value Store
-		tableData.Header = table.Row{"ItemCount", "TotalSize (bytes)"}
-		tableData.Rows = append(
-			tableData.Rows,
-			table.Row{
-				aws.ToInt32(data.ItemCount),
-				aws.ToInt64(data.TotalSizeInBytes)})
+			updateRows := []table.Row{}
+			for i, diff := range data.Update {
+				updateRows = append(updateRows, table.Row{i + 1, diff.Before.Key, diff.Before.Value, diff.After.Value})
+			}
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[UPDATED] Following items will be updated."},
+				Headers:      updateHeaders,
+				Rows:         updateRows})
+		}
 
-	case *kvs.DeleteKeyOutput:
-		// Delete an item in the Key Value Store
-		tableData.Header = table.Row{"ItemCount", "TotalSize (bytes)"}
-		tableData.Rows = append(
-			tableData.Rows,
-			table.Row{
-				aws.ToInt32(data.ItemCount),
-				aws.ToInt64(data.TotalSizeInBytes)})
+		// Delete
+		if len(data.Delete) == 0 {
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[DELETED] No items will be deleted."},
+			})
+		} else {
+			deleteHeaders := []table.Row{
+				{"#", "Key", "Value"},
+			}
+			deleteRows := []table.Row{}
+			for i, diff := range data.Delete {
+				deleteRows = append(deleteRows, table.Row{i + 1, diff.Before.Key, diff.Before.Value})
+			}
+			tables = append(tables, Table{
+				Descriptions: []string{"\n[DELETED] Following items will be deleted."},
+				Headers:      deleteHeaders,
+				Rows:         deleteRows})
+		}
+
+		return tables, nil
 
 	default:
-		return nil, errors.New("unsupported data type")
+		return nil, fmt.Errorf("failed to render as table due to unexpected type: %s", reflect.TypeOf(data).String())
 	}
-
-	return &tableData, nil
 }
 
 func RenderAsTable(data any) error {
-	tableData, err := toTable(data)
+	tables, err := toTables(data)
 	if err != nil {
 		return err
 	}
 
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
+	for _, tableData := range tables {
+		// render descriptions
+		for _, desc := range tableData.Descriptions {
+			os.Stdout.WriteString(desc + "\n")
+		}
 
-	t.AppendHeader(tableData.Header)
-	t.AppendRows(tableData.Rows)
-	t.Render()
+		if len(tableData.Headers) == 0 || len(tableData.Rows) == 0 {
+			continue
+		}
+
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		for _, header := range tableData.Headers {
+			t.AppendHeader(header)
+		}
+		t.AppendRows(tableData.Rows)
+		t.Render()
+	}
 
 	return nil
 }
