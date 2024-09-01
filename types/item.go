@@ -136,3 +136,26 @@ func (il *ItemList) Diff(after *ItemList, delete bool) *ItemListDiff {
 
 	return diff
 }
+
+// PutList returns a list of items to put.
+// This list uses for sync items.
+func (ild *ItemListDiff) PutList() []Item {
+	items := []Item{}
+	for _, diff := range ild.Add {
+		items = append(items, *diff.After)
+	}
+	for _, diff := range ild.Update {
+		items = append(items, *diff.After)
+	}
+	return items
+}
+
+// DeleteList returns a list of items to delete.
+// This list uses for sync items.
+func (ild *ItemListDiff) DeleteList() []Item {
+	items := []Item{}
+	for _, diff := range ild.Delete {
+		items = append(items, *diff.Before)
+	}
+	return items
+}

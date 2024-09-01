@@ -83,13 +83,18 @@ func (ks *KVSSimple) Parse(o any) error {
 
 	switch o := o.(type) {
 	case *kvs.PutKeyOutput:
-		ks.ItemCount = *o.ItemCount
-		ks.TotalSize = *o.TotalSizeInBytes
+		ks.ItemCount = aws.ToInt32(o.ItemCount)
+		ks.TotalSize = aws.ToInt64(o.TotalSizeInBytes)
 		return nil
 
 	case *kvs.DeleteKeyOutput:
-		ks.ItemCount = *o.ItemCount
-		ks.TotalSize = *o.TotalSizeInBytes
+		ks.ItemCount = aws.ToInt32(o.ItemCount)
+		ks.TotalSize = aws.ToInt64(o.TotalSizeInBytes)
+		return nil
+
+	case *kvs.UpdateKeysOutput:
+		ks.ItemCount = aws.ToInt32(o.ItemCount)
+		ks.TotalSize = aws.ToInt64(o.TotalSizeInBytes)
 		return nil
 
 	default:

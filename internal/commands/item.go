@@ -253,9 +253,19 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	}
 
 	if !c.Yes {
-		// TODO: sync
 		return nil
 	}
 
-	return nil
+	// sync
+	out, err := libs.SyncItems(ctx, kvsc, kvsARN, diff.PutList(), diff.DeleteList())
+	if err != nil {
+		return err
+	}
+
+	kvsSimple := types.KVSSimple{}
+	if err := kvsSimple.Parse(out); err != nil {
+		return err
+	}
+
+	return output.Render(&kvsSimple, globals.Output)
 }

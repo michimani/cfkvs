@@ -6,6 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
+	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
+	"github.com/michimani/cfkvs/types"
 )
 
 func NewCloudFrontKeyValueStoreClient(ctx context.Context) (*kvs.Client, error) {
@@ -23,6 +25,7 @@ type CloudFrontKeyValueStoreClient interface {
 	GetKey(ctx context.Context, params *kvs.GetKeyInput, optFns ...func(*kvs.Options)) (*kvs.GetKeyOutput, error)
 	PutKey(ctx context.Context, params *kvs.PutKeyInput, optFns ...func(*kvs.Options)) (*kvs.PutKeyOutput, error)
 	DeleteKey(ctx context.Context, params *kvs.DeleteKeyInput, optFns ...func(*kvs.Options)) (*kvs.DeleteKeyOutput, error)
+	UpdateKeys(ctx context.Context, params *kvs.UpdateKeysInput, optFns ...func(*kvs.Options)) (*kvs.UpdateKeysOutput, error)
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
@@ -69,6 +72,37 @@ func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, ke
 	}
 
 	return c.DeleteKey(ctx, input)
+}
+
+func SyncItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string, putList, deleteList []types.Item) (*kvs.UpdateKeysOutput, error) {
+	puts := []kvsTypes.PutKeyRequestListItem{}
+	for _, item := range putList {
+		puts = append(puts, kvsTypes.PutKeyRequestListItem{
+			Key:   aws.String(item.Key),
+			Value: aws.String(item.Value),
+		})
+	}
+
+	delete := []kvsTypes.DeleteKeyRequestListItem{}
+	for _, item := range deleteList {
+		delete = append(delete, kvsTypes.DeleteKeyRequestListItem{
+			Key: aws.String(item.Key),
+		})
+	}
+
+	eTag, err := getETag(ctx, c, kvsARN)
+	if err != nil {
+		return nil, err
+	}
+
+	input := &kvs.UpdateKeysInput{
+		KvsARN:  aws.String(kvsARN),
+		Puts:    puts,
+		Deletes: delete,
+		IfMatch: eTag,
+	}
+
+	return c.UpdateKeys(ctx, input)
 }
 
 func getETag(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {

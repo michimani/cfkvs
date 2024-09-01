@@ -42,7 +42,7 @@ func toTables(data any) ([]Table, error) {
 
 	case *types.ItemList:
 		// List of Items in the Key Value Store
-		tableData.Headers = []table.Row{{"ID", "Name", "Comment", "Status", "ARN"}}
+		tableData.Headers = []table.Row{{"Key", "Value"}}
 		for _, item := range data.Data {
 			tableData.Rows = append(
 				tableData.Rows,
@@ -52,7 +52,7 @@ func toTables(data any) ([]Table, error) {
 
 	case *types.Item:
 		// An item in the Key Value Store
-		tableData.Headers = []table.Row{{"ID", "Name", "Comment", "Status", "ARN"}}
+		tableData.Headers = []table.Row{{"Key", "Value"}}
 		tableData.Rows = append(
 			tableData.Rows,
 			table.Row{data.Key, data.Value})
