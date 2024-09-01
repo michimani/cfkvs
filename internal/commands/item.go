@@ -6,6 +6,7 @@ import (
 
 	"github.com/michimani/cfkvs/internal/output"
 	"github.com/michimani/cfkvs/libs"
+	"github.com/michimani/cfkvs/types"
 )
 
 type ItemCmd struct {
@@ -65,12 +66,17 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	itemList, err := libs.ListItems(ctx, kvsc, kvsARN)
+	out, err := libs.ListItems(ctx, kvsc, kvsARN)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(itemList, globals.Output); err != nil {
+	itemList := types.ItemList{}
+	if err := itemList.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&itemList, globals.Output); err != nil {
 		return err
 	}
 
@@ -96,12 +102,17 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	item, err := libs.GetItem(ctx, kvsc, kvsARN, c.Key)
+	out, err := libs.GetItem(ctx, kvsc, kvsARN, c.Key)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(item, globals.Output); err != nil {
+	item := types.Item{}
+	if err := item.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&item, globals.Output); err != nil {
 		return err
 	}
 
@@ -130,12 +141,17 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	res, err := libs.PutItem(ctx, kvsc, kvsARN, c.Key, c.Value)
+	out, err := libs.PutItem(ctx, kvsc, kvsARN, c.Key, c.Value)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(res, globals.Output); err != nil {
+	kvsSimple := types.KVSSimple{}
+	if err := kvsSimple.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&kvsSimple, globals.Output); err != nil {
 		return err
 	}
 
@@ -161,12 +177,17 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	res, err := libs.DeleteItem(ctx, kvsc, kvsARN, c.Key)
+	out, err := libs.DeleteItem(ctx, kvsc, kvsARN, c.Key)
 	if err != nil {
 		return err
 	}
 
-	if err := output.Render(res, globals.Output); err != nil {
+	kvsSimple := types.KVSSimple{}
+	if err := kvsSimple.Parse(out); err != nil {
+		return err
+	}
+
+	if err := output.Render(&kvsSimple, globals.Output); err != nil {
 		return err
 	}
 

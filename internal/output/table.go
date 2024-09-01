@@ -4,11 +4,8 @@ import (
 	"errors"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
-	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
-	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/michimani/cfkvs/types"
 )
 
 type Table struct {
@@ -20,69 +17,44 @@ func toTable(data any) (*Table, error) {
 	tableData := Table{}
 
 	switch data := data.(type) {
-	case *cfTypes.KeyValueStore:
+	case *types.KVS:
 		// CloudFront Key Value Store
 		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
 		tableData.Rows = append(
 			tableData.Rows,
-			table.Row{
-				aws.ToString(data.Id),
-				aws.ToString(data.Name),
-				aws.ToString(data.Comment),
-				aws.ToString(data.Status),
-				aws.ToString(data.ARN)})
+			table.Row{data.Id, data.Name, data.Comment, data.Status, data.ARN})
 
-	case []cfTypes.KeyValueStore:
+	case *types.KVSList:
 		// List of CloudFront Key Value Stores
 		tableData.Header = table.Row{"ID", "Name", "Comment", "Status", "ARN"}
-		for _, kvs := range data {
+		for _, kvs := range *data {
 			tableData.Rows = append(
 				tableData.Rows,
-				table.Row{
-					aws.ToString(kvs.Id),
-					aws.ToString(kvs.Name),
-					aws.ToString(kvs.Comment),
-					aws.ToString(kvs.Status),
-					aws.ToString(kvs.ARN)})
+				table.Row{kvs.Id, kvs.Name, kvs.Comment, kvs.Status, kvs.ARN})
 		}
 
-	case []kvsTypes.ListKeysResponseListItem:
+	case *types.ItemList:
 		// List of Items in the Key Value Store
 		tableData.Header = table.Row{"Key", "Value"}
-		for _, item := range data {
+		for _, item := range *data {
 			tableData.Rows = append(
 				tableData.Rows,
-				table.Row{
-					aws.ToString(item.Key),
-					aws.ToString(item.Value)})
+				table.Row{item.Key, item.Value})
 		}
 
-	case *kvs.GetKeyOutput:
+	case *types.Item:
 		// An item in the Key Value Store
 		tableData.Header = table.Row{"Key", "Value"}
 		tableData.Rows = append(
 			tableData.Rows,
-			table.Row{
-				aws.ToString(data.Key),
-				aws.ToString(data.Value)})
+			table.Row{data.Key, data.Value})
 
-	case *kvs.PutKeyOutput:
+	case *types.KVSSimple:
 		// Put an item in the Key Value Store
 		tableData.Header = table.Row{"ItemCount", "TotalSize (bytes)"}
 		tableData.Rows = append(
 			tableData.Rows,
-			table.Row{
-				aws.ToInt32(data.ItemCount),
-				aws.ToInt64(data.TotalSizeInBytes)})
-
-	case *kvs.DeleteKeyOutput:
-		// Delete an item in the Key Value Store
-		tableData.Header = table.Row{"ItemCount", "TotalSize (bytes)"}
-		tableData.Rows = append(
-			tableData.Rows,
-			table.Row{
-				aws.ToInt32(data.ItemCount),
-				aws.ToInt64(data.TotalSizeInBytes)})
+			table.Row{data.ItemCount, data.TotalSize})
 
 	default:
 		return nil, errors.New("unsupported data type")

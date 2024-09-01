@@ -1,9 +1,12 @@
 package types
 
 import (
-	"errors"
+	"fmt"
+	"reflect"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
+	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
 )
 
@@ -27,23 +30,31 @@ func (k *KVS) Parse(o any) error {
 
 	switch o := o.(type) {
 	case *cf.CreateKeyValueStoreOutput:
-		k.Id = *o.KeyValueStore.Id
-		k.Name = *o.KeyValueStore.Name
-		k.Comment = *o.KeyValueStore.Comment
-		k.Status = *o.KeyValueStore.Status
-		k.ARN = *o.KeyValueStore.ARN
+		k.Id = aws.ToString(o.KeyValueStore.Id)
+		k.Name = aws.ToString(o.KeyValueStore.Name)
+		k.Comment = aws.ToString(o.KeyValueStore.Comment)
+		k.Status = aws.ToString(o.KeyValueStore.Status)
+		k.ARN = aws.ToString(o.KeyValueStore.ARN)
 		return nil
 
 	case *cf.DescribeKeyValueStoreOutput:
-		k.Id = *o.KeyValueStore.Id
-		k.Name = *o.KeyValueStore.Name
-		k.Comment = *o.KeyValueStore.Comment
-		k.Status = *o.KeyValueStore.Status
-		k.ARN = *o.KeyValueStore.ARN
+		k.Id = aws.ToString(o.KeyValueStore.Id)
+		k.Name = aws.ToString(o.KeyValueStore.Name)
+		k.Comment = aws.ToString(o.KeyValueStore.Comment)
+		k.Status = aws.ToString(o.KeyValueStore.Status)
+		k.ARN = aws.ToString(o.KeyValueStore.ARN)
+		return nil
+
+	case *cfTypes.KeyValueStore:
+		k.Id = aws.ToString(o.Id)
+		k.Name = aws.ToString(o.Name)
+		k.Comment = aws.ToString(o.Comment)
+		k.Status = aws.ToString(o.Status)
+		k.ARN = aws.ToString(o.ARN)
 		return nil
 
 	default:
-		return errors.New("unexpected type")
+		return fmt.Errorf("failed to parse KVS due to unexpected type: %s", reflect.TypeOf(o).String())
 	}
 }
 
@@ -56,7 +67,7 @@ func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 
 	for _, kvs := range o.KeyValueStoreList.Items {
 		k := KVS{}
-		if err := k.Parse(kvs); err != nil {
+		if err := k.Parse(&kvs); err != nil {
 			return err
 		}
 		*kl = append(*kl, k)
@@ -82,6 +93,6 @@ func (ks *KVSSimple) Parse(o any) error {
 		return nil
 
 	default:
-		return errors.New("unexpected type")
+		return fmt.Errorf("failed to parse KVSSimple due to unexpected type: %s", reflect.TypeOf(o).String())
 	}
 }

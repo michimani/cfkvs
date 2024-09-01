@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
-	"github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 )
 
 func NewCloudFrontKeyValueStoreClient(ctx context.Context) (*kvs.Client, error) {
@@ -27,16 +26,11 @@ type CloudFrontKeyValueStoreClient interface {
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
-func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) ([]types.ListKeysResponseListItem, error) {
+func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*kvs.ListKeysOutput, error) {
 	input := &kvs.ListKeysInput{
 		KvsARN: aws.String(kvsARN),
 	}
-	out, err := c.ListKeys(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.Items, nil
+	return c.ListKeys(ctx, input)
 }
 
 func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.GetKeyOutput, error) {
@@ -44,12 +38,7 @@ func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key s
 		KvsARN: aws.String(kvsARN),
 		Key:    aws.String(key),
 	}
-	out, err := c.GetKey(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return c.GetKey(ctx, input)
 }
 
 func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, value string) (*kvs.PutKeyOutput, error) {
@@ -64,12 +53,7 @@ func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, 
 		Key:     aws.String(key),
 		Value:   aws.String(value),
 	}
-	out, err := c.PutKey(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return c.PutKey(ctx, input)
 }
 
 func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.DeleteKeyOutput, error) {
@@ -84,12 +68,7 @@ func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, ke
 		Key:     aws.String(key),
 	}
 
-	out, err := c.DeleteKey(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return c.DeleteKey(ctx, input)
 }
 
 func getETag(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {
