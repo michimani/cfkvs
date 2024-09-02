@@ -1,9 +1,16 @@
+version: 2
+
+env:
+  - GO111MODULE=on
+
 project_name: cfkvs
 before:
   hooks:
     - go mod download
 builds:
-  - main: ./cmd/cfkvs/main.go
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/cfkvs/main.go
     binary: cfkvs
     ldflags:
       - -s
@@ -23,10 +30,12 @@ archives:
 release:
   prerelease: auto
 brews:
-  - tap:
+  - repository:
       owner: michimani
       name: homebrew-tap
     folder: Formula
     homepage: "https://github.com/michimani/cfkvs"
     description: "A simple command line tool for CloudFront Key Value Store"
     license: "MIT"
+    test: |
+      system "#{bin}/goreleaser -v"

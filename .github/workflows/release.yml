@@ -100,7 +100,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
-          args: release --clean
+          version: "~> v2"
+          args: release --clean --skip=validate --timeout=60m
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
