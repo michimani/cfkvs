@@ -16,8 +16,8 @@ builds:
       - -s
       - -w
       - -extldflags "-static"
-      - -X 'github.com/michimani/cli.version={{.Version}}'
-      - -X 'github.com/michimani/cli.revision={{.ShortCommit}}'
+      - -X github.com/michimani/cli.version={{.Version}}
+      - -X github.com/michimani/cli.revision={{.Commit}}
     goos:
       - linux
       - darwin
