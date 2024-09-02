@@ -34,6 +34,14 @@ This is a simple command line tool for CloudFront Key Value Store.
 | `cloudfront-keyvaluestore update-keys` | - |
 | - | `cfkvs item sync` |
 
+## Installation
+
+### Homebrew
+
+```bash
+brew install michimani/tap/cfkvs
+```
+
 ## Usage
 
 ```
