@@ -1,4 +1,4 @@
-BUILD_FLAGS := -ldflags "-X 'github.com/michimani/cli.version=v1.0.0' -X 'github.com/michimani/cli.revision=$(shell git rev-parse --short HEAD)'"
+BUILD_FLAGS := -ldflags "-X 'github.com/michimani/cfkvs/cli.version=v1.0.0' -X 'github.com/michimani/cfkvs/cli.revision=$(shell git rev-parse --short HEAD)'"
 BUILD_OUTPUT := ./cfkvs
 BUILD_CMD_DIR := ./cmd/cfkvs
 
