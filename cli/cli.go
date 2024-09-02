@@ -18,7 +18,7 @@ type CLI struct {
 var (
 	version       string
 	revision      string
-	versionString = fmt.Sprintf("%s-%s", version, revision)
+	versionString = fmt.Sprintf("v%s-%s", version, revision)
 )
 
 func Run(ctx context.Context) error {
