@@ -1,0 +1,32 @@
+project_name: cfkvs
+before:
+  hooks:
+    - go mod download
+builds:
+  - main: ./cmd/cfkvs/main.go
+    binary: cfkvs
+    ldflags:
+      - -s
+      - -w
+      - -ldflags "-X 'github.com/michimani/cli.version={{.Version}}' -X 'github.com/michimani/cli.revision={{.ShortCommit}}'"
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: tar.gz
+    files:
+      - LICENSE
+      - README.md
+release:
+  prerelease: auto
+brews:
+  - tap:
+      owner: michimani
+      name: homebrew-tap
+    folder: Formula
+    homepage: "https://github.com/michimani/cfkvs"
+    description: "A simple command line tool for CloudFront Key Value Store"
+    license: "MIT"
