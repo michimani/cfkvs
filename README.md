@@ -3,6 +3,8 @@ cfkvs
 
 This is a simple command line tool for CloudFront Key Value Store.
 
+[![codecov](https://codecov.io/gh/michimani/cfkvs/graph/badge.svg?token=PWKPWONA8G)](https://codecov.io/gh/michimani/cfkvs)
+
 ## Features
 
 - KeyValueStore
