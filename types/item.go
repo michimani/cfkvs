@@ -19,6 +19,10 @@ type KeyValueStoreData struct {
 }
 
 func (kd *KeyValueStoreData) ToItemList() *ItemList {
+	if kd == nil {
+		return nil
+	}
+
 	il := &ItemList{
 		Data:  []Item{},
 		kvMap: map[string]*Item{},
@@ -34,7 +38,7 @@ func (kd *KeyValueStoreData) ToItemList() *ItemList {
 
 func (i *Item) Parse(o any) error {
 	if i == nil {
-		i = &Item{}
+		return fmt.Errorf("failed to parse Item due to nil pointer")
 	}
 
 	switch o := o.(type) {
@@ -58,12 +62,29 @@ type ItemList struct {
 	kvMap map[string]*Item
 }
 
-func (il *ItemList) Parse(o *kvs.ListKeysOutput) error {
-	if il == nil {
-		il = &ItemList{
+func NewItemList(items []Item) *ItemList {
+	if items == nil {
+		return &ItemList{
 			Data:  []Item{},
 			kvMap: map[string]*Item{},
 		}
+	}
+
+	il := &ItemList{
+		Data:  items,
+		kvMap: map[string]*Item{},
+	}
+
+	for _, item := range items {
+		il.kvMap[item.Key] = &item
+	}
+
+	return il
+}
+
+func (il *ItemList) Parse(o *kvs.ListKeysOutput) error {
+	if il == nil {
+		return fmt.Errorf("failed to parse ItemList due to nil pointer")
 	}
 
 	if il.Data == nil {
@@ -72,6 +93,10 @@ func (il *ItemList) Parse(o *kvs.ListKeysOutput) error {
 
 	if il.kvMap == nil {
 		il.kvMap = map[string]*Item{}
+	}
+
+	if o == nil {
+		return nil
 	}
 
 	for _, item := range o.Items {
@@ -97,12 +122,30 @@ type ItemListDiff struct {
 	Delete []ItemDiff
 }
 
-func (il *ItemList) Diff(after *ItemList, delete bool) *ItemListDiff {
-	diff := &ItemListDiff{}
+func (il *ItemList) Diff(afterList *ItemList, delete bool) *ItemListDiff {
+	diff := &ItemListDiff{
+		Add:    []ItemDiff{},
+		Update: []ItemDiff{},
+		Delete: []ItemDiff{},
+	}
+
+	if afterList == nil {
+		return diff
+	}
+
+	if il == nil {
+		for _, after := range afterList.Data {
+			diff.Add = append(diff.Add, ItemDiff{
+				Before: nil,
+				After:  &after,
+			})
+		}
+		return diff
+	}
 
 	// Update or Delete
 	for _, before := range il.Data {
-		after, ok := after.kvMap[before.Key]
+		after, ok := afterList.kvMap[before.Key]
 
 		if !ok {
 			if delete {
@@ -125,7 +168,7 @@ func (il *ItemList) Diff(after *ItemList, delete bool) *ItemListDiff {
 	}
 
 	// Add
-	for _, after := range after.Data {
+	for _, after := range afterList.Data {
 		if _, ok := il.kvMap[after.Key]; !ok {
 			diff.Add = append(diff.Add, ItemDiff{
 				Before: nil,
@@ -140,7 +183,12 @@ func (il *ItemList) Diff(after *ItemList, delete bool) *ItemListDiff {
 // PutList returns a list of items to put.
 // This list uses for sync items.
 func (ild *ItemListDiff) PutList() []Item {
+	if ild == nil {
+		return []Item{}
+	}
+
 	items := []Item{}
+
 	for _, diff := range ild.Add {
 		items = append(items, *diff.After)
 	}
@@ -153,6 +201,10 @@ func (ild *ItemListDiff) PutList() []Item {
 // DeleteList returns a list of items to delete.
 // This list uses for sync items.
 func (ild *ItemListDiff) DeleteList() []Item {
+	if ild == nil {
+		return []Item{}
+	}
+
 	items := []Item{}
 	for _, diff := range ild.Delete {
 		items = append(items, *diff.Before)
