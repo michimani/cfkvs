@@ -3,25 +3,22 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "**.go"
-      - "go.mod"
   pull_request:
     branches:
       - "**"
-    paths:
-      - "**.go"
-      - "go.mod"
+
+env:
+  GO_VERSION: "1.23"
 
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.23
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
@@ -30,7 +27,7 @@ jobs:
         run: go install
 
       - name: Test code
-        run: go test -race -coverprofile="coverage.txt" -covermode=atomic github.com/michimani/cfkvs/... -shuffle=on
+        run: go test -race -coverprofile="coverage.txt" -covermode=atomic github.com/michimani/cfkvs/... -shuffle=on -count=1
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v4
