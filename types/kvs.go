@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
@@ -16,6 +17,20 @@ type KVS struct {
 	Comment string `json:"comment"`
 	Status  string `json:"status"`
 	ARN     string `json:"arn"`
+}
+
+type KeyValueStoreFull struct {
+	ID               string    `json:"id"`
+	ARN              string    `json:"arn"`
+	Name             string    `json:"name"`
+	Comment          string    `json:"comment"`
+	Status           string    `json:"status"`
+	ItemCount        int32     `json:"itemCount"`
+	TotalSizeInBytes int64     `json:"totalSizeInBytes"`
+	Created          time.Time `json:"created"`
+	LastModified     time.Time `json:"lastModified"`
+	FailureReason    string    `json:"failureReason"`
+	ETag             string    `json:"eTag"`
 }
 
 type KVSSimple struct {
