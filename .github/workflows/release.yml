@@ -30,7 +30,7 @@ jobs:
       - uses: Songmu/tagpr@v1
         id: tagpr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         if: ${{ github.event_name != 'workflow_dispatch' }}
 
       - name: Setup Go
