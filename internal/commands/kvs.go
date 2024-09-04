@@ -12,6 +12,7 @@ import (
 type KvsCmd struct {
 	List   ListKvsSubCmd `cmd:"" help:"List key value stores in your account."`
 	Create CreateSubCmd  `cmd:"" help:"Create a key value store."`
+	Info   InfoSubCmd    `cmd:"" help:"Show information of the key value store."`
 }
 
 type ListKvsSubCmd struct{}
@@ -21,6 +22,10 @@ type CreateSubCmd struct {
 	Comment   string `name:"comment" help:"Comment of the key value store."`
 	Bucket    string `name:"bucket" help:"S3 bucket name to import key value store, if you want."`
 	ObjectKey string `name:"object-key" help:"S3 object key to import key value store, if you want."`
+}
+
+type InfoSubCmd struct {
+	Name string `name:"name" help:"Name of the key value store." required:""`
 }
 
 func (c *ListKvsSubCmd) Run(globals *Globals) error {
@@ -75,6 +80,30 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 	}
 
 	if err := output.Render(&kvs, globals.Output); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *InfoSubCmd) Run(globals *Globals) error {
+	ctx := context.TODO()
+	cfc, err := libs.NewCloudFrontClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	info, err := libs.DescribeKeyValueStore(ctx, cfc, kvsc, c.Name)
+	if err != nil {
+		return err
+	}
+
+	if err := output.Render(info, globals.Output); err != nil {
 		return err
 	}
 

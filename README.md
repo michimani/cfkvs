@@ -33,6 +33,7 @@ This is a simple command line tool for CloudFront Key Value Store.
 | `cloudfront-keyvaluestore put-key` | `cfkvs item put` |
 | `cloudfront-keyvaluestore update-keys` | - |
 | - | `cfkvs item sync` |
+| - | `cfkvs kvs info` |
 
 ## Installation
 
@@ -167,6 +168,33 @@ $ cfkvs item sync \
 --delete \
 --yes
 ```
+
+### Describe a key value store
+
+The Describe action for CloudFront Key Value Store has two actions: **CloudFront:DescribeKeyValueStore** and **CloudFrontKeyValueStore:DescribeKeyValueStore**. The `cfkvs kvs info` command can get the merged information of these actions.
+
+```bash
+$ cfkvs kvs info --kvs-name='cf-kvs-sample' --output=json
+```
+
+Output:
+
+```json
+{
+    "id": "xxxxxxxx-0000-0000-0000-xxxxxxxxxxxx",
+    "arn": "arn:aws:cloudfront::000000000000:key-value-store/xxxxxxxx-0000-0000-0000-xxxxxxxxxxxx",
+    "name": "cf-kvs-sample",
+    "comment": "sample kvs",
+    "status": "READY",
+    "itemCount": 2,
+    "totalSizeInBytes": 8,
+    "created": "2024-08-30T14:12:09.334Z",
+    "lastModified": "2024-08-30T14:12:09.334Z",
+    "failureReason": "",
+    "eTag": "E3XXXXXXXXXXXX"
+}
+```
+
 
 ## License
 

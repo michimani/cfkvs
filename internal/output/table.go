@@ -66,6 +66,38 @@ func toTables(data any) ([]Table, error) {
 			table.Row{data.ItemCount, data.TotalSize})
 		return []Table{tableData}, nil
 
+	case *types.KeyValueStoreFull:
+		// Full information of the Key Value Store
+		tableData.Headers = []table.Row{{
+			"ID",
+			"ARN",
+			"Name",
+			"Comment",
+			"Status",
+			"ItemCount",
+			"TotalSizeInBytes",
+			"Created",
+			"LastModified",
+			"FailureReason",
+			"ETag",
+		}}
+		tableData.Rows = append(
+			tableData.Rows,
+			table.Row{
+				data.ID,
+				data.ARN,
+				data.Name,
+				data.Comment,
+				data.Status,
+				data.ItemCount,
+				data.TotalSizeInBytes,
+				data.Created,
+				data.LastModified,
+				data.FailureReason,
+				data.ETag,
+			})
+		return []Table{tableData}, nil
+
 	case *types.ItemListDiff:
 		// List of Item differences in the Key Value Store
 		tables := []Table{}
