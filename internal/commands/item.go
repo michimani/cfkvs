@@ -14,7 +14,7 @@ type ItemCmd struct {
 	Get    GetSubCmd       `cmd:"" help:"Get an item in the key value store."`
 	Put    PutSubCmd       `cmd:"" help:"Put an item in the key value store."`
 	Delete DeleteSubCmd    `cmd:"" help:"Delete an item in the key value store."`
-	Sync   SyncSubCmd      `cmd:"" help:"Sync items in the key value store with S3 object."`
+	Sync   SyncSubCmd      `cmd:"" help:"Sync items in the key value store with S3 object or specified JSON file."`
 }
 
 type ListItemsSubCmd struct {
@@ -39,8 +39,9 @@ type DeleteSubCmd struct {
 
 type SyncSubCmd struct {
 	KvsName   string `name:"kvs-name" help:"Name of the key value store." required:""`
-	Bucket    string `name:"bucket" help:"S3 bucket name to sync key value store" required:""`
-	ObjectKey string `name:"object-key" help:"S3 object key to sync key value store" required:""`
+	Bucket    string `name:"bucket" help:"S3 bucket name to sync key value store. If you want to sync with S3 object, this is required."`
+	ObjectKey string `name:"object-key" help:"S3 object key to sync key value store. If you want to sync with S3 object, this is required."`
+	File      string `name:"file" help:"Path to the file to sync key value store. If this is specified, sync with this file instead of S3 object."`
 	Delete    bool   `name:"delete" help:"Delete items that are not in the S3 object."`
 	Yes       bool   `name:"yes" short:"y" help:"Execute sync. If not specified, only show the items to be synced."`
 }
@@ -207,20 +208,21 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	if c.KvsName == "" {
 		return errors.New("kvs-name is required")
 	}
-	if c.Bucket == "" {
-		return errors.New("bucket is required")
-	}
-	if c.ObjectKey == "" {
-		return errors.New("object-key is required")
+
+	fromFile := false
+	if c.File != "" {
+		fromFile = true
+	} else {
+		if c.Bucket == "" {
+			return errors.New("bucket is required")
+		}
+		if c.ObjectKey == "" {
+			return errors.New("object-key is required")
+		}
 	}
 
 	ctx := context.TODO()
 	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	s3c, err := libs.NewS3Client(ctx)
 	if err != nil {
 		return err
 	}
@@ -240,14 +242,27 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	// get after items from S3
-	afterData, err := libs.GetKeyValueStoreData(ctx, s3c, c.Bucket, c.ObjectKey)
-	if err != nil {
-		return err
+	// get after items
+	afterItems := &types.KeyValueStoreData{}
+	if fromFile {
+		// from the file
+		if afterItems, err = libs.GetKeyValueStoreDataFromFile(c.File); err != nil {
+			return err
+		}
+	} else {
+		// from S3
+		s3c, err := libs.NewS3Client(ctx)
+		if err != nil {
+			return err
+		}
+
+		if afterItems, err = libs.GetKeyValueStoreData(ctx, s3c, c.Bucket, c.ObjectKey); err != nil {
+			return err
+		}
 	}
 
 	// show diff
-	diff := before.Diff(afterData.ToItemList(), c.Delete)
+	diff := before.Diff(afterItems.ToItemList(), c.Delete)
 	if err := output.Render(diff, output.OutputTypeTable); err != nil {
 		return err
 	}

@@ -10,6 +10,102 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_KeyValueStoreData_FromBytes(t *testing.T) {
+	cases := []struct {
+		name      string
+		kvsd      *types.KeyValueStoreData
+		input     []byte
+		expect    types.KeyValueStoreData
+		wantError bool
+	}{
+		{
+			name:  "normal",
+			kvsd:  &types.KeyValueStoreData{},
+			input: []byte(`{"data":[{"key":"key1","value":"value1"},{"key":"key2","value":"value2"}]}`),
+			expect: types.KeyValueStoreData{
+				Data: &[]types.Item{
+					{Key: "key1", Value: "value1"},
+					{Key: "key2", Value: "value2"},
+				},
+			},
+			wantError: false,
+		},
+		{
+			name:  "empty",
+			kvsd:  &types.KeyValueStoreData{},
+			input: []byte(`{"data":[]}`),
+			expect: types.KeyValueStoreData{
+				Data: &[]types.Item{},
+			},
+			wantError: false,
+		},
+		{
+			name:      "has empty key",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`{"data":[{"key":"","value":"value1"},{"key":"key2","value":"value2"}]}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "has empty value",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`{"data":[{"key":"","value":""},{"key":"key2","value":"value2"}]}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "invalid json: not json format",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`invalid`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "invalid json: invalid data structure 1",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`{"data":{}}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "invalid json: invalid data structure 2",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`{"invalid":[]}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "invalid json: invalid data structure 3",
+			kvsd:      &types.KeyValueStoreData{},
+			input:     []byte(`{"data":[{"k":"k1","v":"v1"}]}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+		{
+			name:      "nil KeyValueStoreData",
+			kvsd:      nil,
+			input:     []byte(`{"data":[{"key":"key1","value":"value1"},{"key":"key2","value":"value2"}]}`),
+			expect:    types.KeyValueStoreData{},
+			wantError: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			err := c.kvsd.FromBytes(c.input)
+			if c.wantError {
+				asst.Error(err)
+				return
+			}
+
+			asst.Nil(err)
+			asst.Equal(c.expect, *c.kvsd, c.kvsd)
+		})
+	}
+}
+
 func Test_KeyValueStoreData_ToItemList(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -19,7 +115,7 @@ func Test_KeyValueStoreData_ToItemList(t *testing.T) {
 		{
 			name: "normal",
 			kvsd: &types.KeyValueStoreData{
-				Data: []types.Item{
+				Data: &[]types.Item{
 					{Key: "key1", Value: "value1"},
 					{Key: "key2", Value: "value2"},
 				},
@@ -31,7 +127,7 @@ func Test_KeyValueStoreData_ToItemList(t *testing.T) {
 		{
 			name: "empty",
 			kvsd: &types.KeyValueStoreData{
-				Data: []types.Item{},
+				Data: &[]types.Item{},
 			},
 			expectData: []types.Item{},
 		},

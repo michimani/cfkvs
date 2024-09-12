@@ -10,6 +10,7 @@ This is a simple command line tool for CloudFront Key Value Store.
 - KeyValueStore
   - list
   - create
+  - info
 - Item (Key-Value pair)
   - list
   - get
@@ -61,11 +62,12 @@ Flags:
 Commands:
   kvs list       List key value stores in your account.
   kvs create     Create a key value store.
+  kvs info       Show information of the key value store.
   item list      List items in the key value store.
   item get       Get an item in the key value store.
   item put       Put an item in the key value store.
   item delete    Delete an item in the key value store.
-  item sync      Sync items in the key value store with S3 object.
+  item sync      Sync items in the key value store with S3 object or specified JSON file.
 ```
 
 Run `cfkvs <command> --help` for more information on a command.
@@ -167,6 +169,19 @@ $ cfkvs item sync \
 --key='data.json' \
 --delete \
 --yes
+```
+
+### Sync items in the key value store with a JSON file
+
+You can synchronize the key-value store with the JSON file specified by the `--file` flag in the same way as synchronizing with an S3 object.
+
+If you specify the `--file` flag and `--bucket` and `--key` at the same time, the `--file` flag takes precedence.
+
+
+```bash
+$ cfkvs item sync \
+--kvs-name='cf-kvs-sample' \
+--file='./path/to/data.json'
 ```
 
 ### Describe a key value store
