@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -15,7 +16,48 @@ type Item struct {
 }
 
 type KeyValueStoreData struct {
-	Data []Item `json:"data"`
+	Data *[]Item `json:"data"`
+}
+
+var invalidDataStructureErrorMessage = `
+data must be a list of key-value pairs following the structure below:
+{
+  "data": [
+    {
+      "key": "key1",
+      "value": "value1"
+    },
+    {
+      "key": "key2",
+      "value": "value2"
+    },
+    ...
+  ]
+}
+
+"key" and "value" must be strings and cannot be empty.
+`
+
+func (kd *KeyValueStoreData) FromBytes(b []byte) error {
+	if kd == nil {
+		return fmt.Errorf("failed to unmarshal key value store data due to nil pointer")
+	}
+
+	if err := json.Unmarshal(b, kd); err != nil {
+		return fmt.Errorf("failed to unmarshal key value store data: %w\n%s", err, invalidDataStructureErrorMessage)
+	}
+
+	if kd.Data == nil {
+		return fmt.Errorf("failed to unmarshal key value store data: invalid data structure\n%s", invalidDataStructureErrorMessage)
+	}
+
+	for _, item := range *kd.Data {
+		if item.Key == "" || item.Value == "" {
+			return fmt.Errorf("failed to unmarshal key value store data: invalid data structure\n%s", invalidDataStructureErrorMessage)
+		}
+	}
+
+	return nil
 }
 
 func (kd *KeyValueStoreData) ToItemList() *ItemList {
@@ -28,7 +70,7 @@ func (kd *KeyValueStoreData) ToItemList() *ItemList {
 		kvMap: map[string]*Item{},
 	}
 
-	for _, item := range kd.Data {
+	for _, item := range *kd.Data {
 		il.Data = append(il.Data, item)
 		il.kvMap[item.Key] = &item
 	}
