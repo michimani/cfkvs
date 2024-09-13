@@ -77,7 +77,7 @@ type KVSList []KVS
 
 func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 	if kl == nil {
-		kl = &KVSList{}
+		return fmt.Errorf("KVSList is nil")
 	}
 
 	for _, kvs := range o.KeyValueStoreList.Items {
