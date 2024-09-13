@@ -93,7 +93,7 @@ func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 
 func (ks *KVSSimple) Parse(o any) error {
 	if ks == nil {
-		ks = &KVSSimple{}
+		return fmt.Errorf("KVSSimple is nil")
 	}
 
 	switch o := o.(type) {

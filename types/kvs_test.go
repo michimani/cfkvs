@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
 	"github.com/michimani/cfkvs/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -201,6 +202,80 @@ func Test_KVSList_Parse(t *testing.T) {
 
 			asst.NoError(err)
 			asst.Equal(c.expect, *c.kl)
+		})
+	}
+}
+
+func Test_KVSSimple_Parse(t *testing.T) {
+	cases := []struct {
+		name    string
+		ks      *types.KVSSimple
+		o       any
+		expect  types.KVSSimple
+		wantErr bool
+	}{
+		{
+			name: "CloudFrontKeyValueStore PutKeyOutput",
+			ks:   &types.KVSSimple{},
+			o: &kvs.PutKeyOutput{
+				ItemCount:        aws.Int32(1),
+				TotalSizeInBytes: aws.Int64(1024),
+			},
+			expect: types.KVSSimple{
+				ItemCount: 1,
+				TotalSize: 1024,
+			},
+		},
+		{
+			name: "CloudFrontKeyValueStore DeleteKeyOutput",
+			ks:   &types.KVSSimple{},
+			o: &kvs.DeleteKeyOutput{
+				ItemCount:        aws.Int32(1),
+				TotalSizeInBytes: aws.Int64(1024),
+			},
+			expect: types.KVSSimple{
+				ItemCount: 1,
+				TotalSize: 1024,
+			},
+		},
+		{
+			name: "CloudFrontKeyValueStore UpdateKeysOutput",
+			ks:   &types.KVSSimple{},
+			o: &kvs.UpdateKeysOutput{
+				ItemCount:        aws.Int32(1),
+				TotalSizeInBytes: aws.Int64(1024),
+			},
+			expect: types.KVSSimple{
+				ItemCount: 1,
+				TotalSize: 1024,
+			},
+		},
+		{
+			name:    "nil KVSSimple",
+			ks:      nil,
+			o:       &kvs.PutKeyOutput{},
+			wantErr: true,
+		},
+		{
+			name:    "invalid type",
+			ks:      &types.KVSSimple{},
+			o:       "invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			err := c.ks.Parse(c.o)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, *c.ks)
 		})
 	}
 }
