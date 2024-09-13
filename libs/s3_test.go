@@ -16,28 +16,38 @@ import (
 
 func Test_NewS3Client(t *testing.T) {
 	cases := []struct {
-		name       string
-		ctx        context.Context
-		awsProfile string
-		wantErr    bool
+		name    string
+		ctx     context.Context
+		envs    map[string]string
+		wantErr bool
 	}{
 		{
-			name:       "success",
-			ctx:        context.Background(),
-			awsProfile: "default",
-			wantErr:    false,
+			name: "success",
+			ctx:  context.Background(),
+			envs: map[string]string{
+				"AWS_ACCESS_KEY_ID":     "dummy_key_id",
+				"AWS_SECRET_ACCESS_KEY": "dummy_secret_key",
+				"AWS_SESSION_TOKEN":     "dummy_session_token",
+				"AWS_REGION":            "ap-northeast-1",
+			},
+			wantErr: false,
 		},
 		{
-			name:       "failed to load default config",
-			ctx:        context.Background(),
-			awsProfile: "invalid",
-			wantErr:    true,
+			name: "failed to load default config",
+			ctx:  context.Background(),
+			envs: map[string]string{
+				"AWS_PROFILE": "invalid",
+				"AWS_REGION":  "ap-northeast-1",
+			},
+			wantErr: true,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(tt *testing.T) {
-			tt.Setenv("AWS_PROFILE", c.awsProfile)
+			for k, v := range c.envs {
+				tt.Setenv(k, v)
+			}
 
 			asst := assert.New(tt)
 
