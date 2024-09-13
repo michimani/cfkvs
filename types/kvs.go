@@ -40,7 +40,7 @@ type KVSSimple struct {
 
 func (k *KVS) Parse(o any) error {
 	if k == nil {
-		k = &KVS{}
+		return fmt.Errorf("KVS is nil")
 	}
 
 	switch o := o.(type) {
