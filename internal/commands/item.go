@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/michimani/cfkvs/internal/output"
 	"github.com/michimani/cfkvs/libs"
@@ -86,7 +87,7 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&itemList, globals.Output); err != nil {
+	if err := output.Render(&itemList, globals.Output, os.Stdout); err != nil {
 		return err
 	}
 
@@ -122,7 +123,7 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&item, globals.Output); err != nil {
+	if err := output.Render(&item, globals.Output, os.Stdout); err != nil {
 		return err
 	}
 
@@ -161,7 +162,7 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvsSimple, globals.Output); err != nil {
+	if err := output.Render(&kvsSimple, globals.Output, os.Stdout); err != nil {
 		return err
 	}
 
@@ -197,7 +198,7 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvsSimple, globals.Output); err != nil {
+	if err := output.Render(&kvsSimple, globals.Output, os.Stdout); err != nil {
 		return err
 	}
 
@@ -263,7 +264,7 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 
 	// show diff
 	diff := before.Diff(afterItems.ToItemList(), c.Delete)
-	if err := output.Render(diff, output.OutputTypeTable); err != nil {
+	if err := output.Render(diff, output.OutputTypeTable, os.Stdout); err != nil {
 		return err
 	}
 
@@ -282,5 +283,5 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	return output.Render(&kvsSimple, globals.Output)
+	return output.Render(&kvsSimple, globals.Output, os.Stdout)
 }
