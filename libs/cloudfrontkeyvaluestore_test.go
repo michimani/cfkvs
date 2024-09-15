@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
+	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/michimani/cfkvs/libs"
 	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
@@ -120,6 +121,75 @@ func Test_NewNewCloudFrontKeyValueStoreClient(t *testing.T) {
 
 			asst.NoError(err)
 			asst.NotNil(sc)
+		})
+	}
+}
+
+func Test_ListItems(t *testing.T) {
+	cases := []struct {
+		name    string
+		kvscOut struct {
+			Out   *kvs.ListKeysOutput
+			Error error
+		}
+		kvsARN  string
+		expect  *kvs.ListKeysOutput
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			kvscOut: struct {
+				Out   *kvs.ListKeysOutput
+				Error error
+			}{
+				Out: &kvs.ListKeysOutput{
+					Items: []kvsTypes.ListKeysResponseListItem{
+						{Key: aws.String("key1"), Value: aws.String("value1")},
+					},
+				},
+				Error: nil,
+			},
+			kvsARN: "dummy_arn",
+			expect: &kvs.ListKeysOutput{
+				Items: []kvsTypes.ListKeysResponseListItem{
+					{Key: aws.String("key1"), Value: aws.String("value1")},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to list keys",
+			kvscOut: struct {
+				Out   *kvs.ListKeysOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsARN:  "dummy_arn",
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+			m.EXPECT().
+				ListKeys(gomock.Any(), gomock.Any()).
+				Return(c.kvscOut.Out, c.kvscOut.Error)
+
+			got, err := libs.ListItems(context.Background(), m, c.kvsARN)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
 		})
 	}
 }
