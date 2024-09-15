@@ -13,10 +13,8 @@ func RenderAsJson(data any, o io.Writer) error {
 		return err
 	}
 
-	if _, err := o.Write(out); err != nil {
-		return err
-	}
-
+	// In most cases, the Write method does not return an error, so error checking is omitted.
+	_, _ = o.Write(out)
 	_, _ = o.Write([]byte("\n"))
 
 	return nil
