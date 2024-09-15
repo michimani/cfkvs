@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.61.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/stretchr/testify v1.9.0
+	go.uber.org/mock v0.4.0
 )
 
 require (

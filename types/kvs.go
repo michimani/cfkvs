@@ -40,7 +40,7 @@ type KVSSimple struct {
 
 func (k *KVS) Parse(o any) error {
 	if k == nil {
-		k = &KVS{}
+		return fmt.Errorf("KVS is nil")
 	}
 
 	switch o := o.(type) {
@@ -77,7 +77,7 @@ type KVSList []KVS
 
 func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 	if kl == nil {
-		kl = &KVSList{}
+		return fmt.Errorf("KVSList is nil")
 	}
 
 	for _, kvs := range o.KeyValueStoreList.Items {
@@ -93,7 +93,7 @@ func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 
 func (ks *KVSSimple) Parse(o any) error {
 	if ks == nil {
-		ks = &KVSSimple{}
+		return fmt.Errorf("KVSSimple is nil")
 	}
 
 	switch o := o.(type) {
