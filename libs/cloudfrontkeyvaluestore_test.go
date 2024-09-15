@@ -354,3 +354,84 @@ func Test_PutItem(t *testing.T) {
 		})
 	}
 }
+
+func Test_DeleteItem(t *testing.T) {
+	cases := []struct {
+		name    string
+		kvscOut struct {
+			Out   *kvs.DeleteKeyOutput
+			Error error
+		}
+		kvsARN  string
+		key     string
+		expect  *kvs.DeleteKeyOutput
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			kvscOut: struct {
+				Out   *kvs.DeleteKeyOutput
+				Error error
+			}{
+				Out: &kvs.DeleteKeyOutput{
+					ETag:             aws.String("dummy_etag"),
+					ItemCount:        aws.Int32(1),
+					TotalSizeInBytes: aws.Int64(1024),
+				},
+				Error: nil,
+			},
+			kvsARN: "dummy_arn",
+			key:    "key1",
+			expect: &kvs.DeleteKeyOutput{
+				ETag:             aws.String("dummy_etag"),
+				ItemCount:        aws.Int32(1),
+				TotalSizeInBytes: aws.Int64(1024),
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to delete key",
+			kvscOut: struct {
+				Out   *kvs.DeleteKeyOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsARN:  "dummy_arn",
+			key:     "key1",
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(&kvs.DescribeKeyValueStoreOutput{ETag: aws.String("dummy_etag")}, nil)
+
+			m.EXPECT().
+				DeleteKey(gomock.Any(), &kvs.DeleteKeyInput{
+					IfMatch: aws.String("dummy_etag"),
+					KvsARN:  aws.String(c.kvsARN),
+					Key:     aws.String(c.key),
+				}).
+				Return(c.kvscOut.Out, c.kvscOut.Error)
+
+			got, err := libs.DeleteItem(context.Background(), m, c.kvsARN, c.key)
+			if c.wantErr {
+				asst.Error(err)
+				asst.Nil(got)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
+		})
+	}
+}
