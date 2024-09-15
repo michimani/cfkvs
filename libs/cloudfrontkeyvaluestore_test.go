@@ -179,12 +179,88 @@ func Test_ListItems(t *testing.T) {
 
 			m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
 			m.EXPECT().
-				ListKeys(gomock.Any(), gomock.Any()).
+				ListKeys(gomock.Any(), &kvs.ListKeysInput{
+					KvsARN: aws.String(c.kvsARN),
+				}).
 				Return(c.kvscOut.Out, c.kvscOut.Error)
 
 			got, err := libs.ListItems(context.Background(), m, c.kvsARN)
 			if c.wantErr {
 				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
+		})
+	}
+}
+
+func Test_GetItem(t *testing.T) {
+	cases := []struct {
+		name    string
+		kvscOut struct {
+			Out   *kvs.GetKeyOutput
+			Error error
+		}
+		kvsARN  string
+		key     string
+		expect  *kvs.GetKeyOutput
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			kvscOut: struct {
+				Out   *kvs.GetKeyOutput
+				Error error
+			}{
+				Out: &kvs.GetKeyOutput{
+					Key:   aws.String("key1"),
+					Value: aws.String("value1"),
+				},
+				Error: nil,
+			},
+			kvsARN: "dummy_arn",
+			key:    "key1",
+			expect: &kvs.GetKeyOutput{
+				Key:   aws.String("key1"),
+				Value: aws.String("value1"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to get key",
+			kvscOut: struct {
+				Out   *kvs.GetKeyOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsARN:  "dummy_arn",
+			key:     "key1",
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+			m.EXPECT().
+				GetKey(gomock.Any(), &kvs.GetKeyInput{
+					KvsARN: aws.String(c.kvsARN),
+					Key:    aws.String(c.key),
+				}).
+				Return(c.kvscOut.Out, c.kvscOut.Error)
+
+			got, err := libs.GetItem(context.Background(), m, c.kvsARN, c.key)
+			if c.wantErr {
+				asst.Error(err)
+				asst.Nil(got)
 				return
 			}
 
