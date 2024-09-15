@@ -73,3 +73,53 @@ func Test_getETag(t *testing.T) {
 		})
 	}
 }
+
+func Test_NewNewCloudFrontKeyValueStoreClient(t *testing.T) {
+	cases := []struct {
+		name    string
+		ctx     context.Context
+		envs    map[string]string
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			ctx:  context.Background(),
+			envs: map[string]string{
+				"AWS_ACCESS_KEY_ID":     "dummy_key_id",
+				"AWS_SECRET_ACCESS_KEY": "dummy_secret_key",
+				"AWS_SESSION_TOKEN":     "dummy_session_token",
+				"AWS_REGION":            "ap-northeast-1",
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to load default config",
+			ctx:  context.Background(),
+			envs: map[string]string{
+				"AWS_PROFILE": "invalid",
+				"AWS_REGION":  "ap-northeast-1",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			for k, v := range c.envs {
+				tt.Setenv(k, v)
+			}
+
+			asst := assert.New(tt)
+
+			sc, err := libs.NewCloudFrontKeyValueStoreClient(c.ctx)
+			if c.wantErr {
+				asst.Error(err)
+				asst.Nil(sc)
+				return
+			}
+
+			asst.NoError(err)
+			asst.NotNil(sc)
+		})
+	}
+}
