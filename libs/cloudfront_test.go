@@ -191,3 +191,157 @@ func Test_ListKvs(t *testing.T) {
 		})
 	}
 }
+
+func Test_KVSImportSourceS3_ARN(t *testing.T) {
+	cases := []struct {
+		name string
+		s3   libs.KVSImportSourceS3
+		want string
+	}{
+		{
+			name: "success",
+			s3:   libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"},
+			want: "arn:aws:s3:::bucket/key",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			asst.Equal(c.want, c.s3.ARN())
+		})
+	}
+}
+
+func Test_KVSImportSourceS3_Type(t *testing.T) {
+	cases := []struct {
+		name string
+		s3   libs.KVSImportSourceS3
+		want cfTypes.ImportSourceType
+	}{
+		{
+			name: "success",
+			s3:   libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"},
+			want: cfTypes.ImportSourceTypeS3,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			asst.Equal(c.want, c.s3.Type())
+		})
+	}
+}
+
+func Test_CreateKvs(t *testing.T) {
+	cases := []struct {
+		name      string
+		clientOut struct {
+			CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+			Error                     error
+		}
+		kvsName string
+		comment string
+		source  libs.KVSImportSource
+		wantErr bool
+	}{
+		{
+			name: "success",
+			clientOut: struct {
+				CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+				Error                     error
+			}{
+				CreateKeyValueStoreOutput: &cloudfront.CreateKeyValueStoreOutput{
+					KeyValueStore: &cfTypes.KeyValueStore{
+						Id:      aws.String("id"),
+						Name:    aws.String("kvs_name"),
+						Comment: aws.String("kvs_comment"),
+						Status:  aws.String("status"),
+						ARN:     aws.String("arn"),
+					},
+				},
+				Error: nil,
+			},
+			kvsName: "kvs_name",
+			comment: "kvs_comment",
+			wantErr: false,
+		},
+		{
+			name: "success with import source",
+			clientOut: struct {
+				CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+				Error                     error
+			}{
+				CreateKeyValueStoreOutput: &cloudfront.CreateKeyValueStoreOutput{
+					KeyValueStore: &cfTypes.KeyValueStore{
+						Id:      aws.String("id"),
+						Name:    aws.String("kvs_name"),
+						Comment: aws.String("kvs_comment"),
+						Status:  aws.String("status"),
+						ARN:     aws.String("arn"),
+					},
+				},
+				Error: nil,
+			},
+			kvsName: "kvs_name",
+			comment: "kvs_comment",
+			source:  libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"},
+			wantErr: false,
+		},
+		{
+			name: "failed to create key value store",
+			clientOut: struct {
+				CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+				Error                     error
+			}{
+				CreateKeyValueStoreOutput: nil,
+				Error:                     errors.New("failed to create key value store"),
+			},
+			kvsName: "kvs_name",
+			comment: "kvs_comment",
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctx := context.Background()
+
+			ctrl := gomock.NewController(tt)
+			m := libs.NewMockCloudFrontClient(ctrl)
+
+			if c.source != nil {
+				is := new(cfTypes.ImportSource)
+				is.SourceARN = aws.String(c.source.ARN())
+				is.SourceType = c.source.Type()
+
+				m.EXPECT().
+					CreateKeyValueStore(ctx, &cloudfront.CreateKeyValueStoreInput{
+						Name:         &c.kvsName,
+						Comment:      &c.comment,
+						ImportSource: is,
+					}).
+					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
+			} else {
+				m.EXPECT().
+					CreateKeyValueStore(ctx, &cloudfront.CreateKeyValueStoreInput{
+						Name:    &c.kvsName,
+						Comment: &c.comment,
+					}).
+					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
+			}
+
+			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, c.source)
+			if c.wantErr {
+				asst.Error(err)
+				asst.Nil(out)
+				return
+			}
+
+			asst.NoError(err)
+			asst.NotNil(out)
+		})
+	}
+}
