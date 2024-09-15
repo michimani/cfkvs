@@ -8,6 +8,7 @@ import (
 	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
 	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/michimani/cfkvs/libs"
+	"github.com/michimani/cfkvs/types"
 	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -424,6 +425,114 @@ func Test_DeleteItem(t *testing.T) {
 				Return(c.kvscOut.Out, c.kvscOut.Error)
 
 			got, err := libs.DeleteItem(context.Background(), m, c.kvsARN, c.key)
+			if c.wantErr {
+				asst.Error(err)
+				asst.Nil(got)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
+		})
+	}
+}
+
+func Test_SyncItems(t *testing.T) {
+	cases := []struct {
+		name    string
+		kvscOut struct {
+			Out   *kvs.UpdateKeysOutput
+			Error error
+		}
+		kvsARN     string
+		putList    []types.Item
+		deleteList []types.Item
+		expect     *kvs.UpdateKeysOutput
+		wantErr    bool
+	}{
+		{
+			name: "ok",
+			kvscOut: struct {
+				Out   *kvs.UpdateKeysOutput
+				Error error
+			}{
+				Out: &kvs.UpdateKeysOutput{
+					ETag:             aws.String("dummy_etag"),
+					ItemCount:        aws.Int32(1),
+					TotalSizeInBytes: aws.Int64(1024),
+				},
+				Error: nil,
+			},
+			kvsARN: "dummy_arn",
+			putList: []types.Item{
+				{Key: "key1", Value: "value1"},
+			},
+			deleteList: []types.Item{
+				{Key: "key2", Value: "value2"},
+			},
+			expect: &kvs.UpdateKeysOutput{
+				ETag:             aws.String("dummy_etag"),
+				ItemCount:        aws.Int32(1),
+				TotalSizeInBytes: aws.Int64(1024),
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to sync keys",
+			kvscOut: struct {
+				Out   *kvs.UpdateKeysOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsARN: "dummy_arn",
+			putList: []types.Item{
+				{Key: "key1", Value: "value1"},
+			},
+			deleteList: []types.Item{
+				{Key: "key2", Value: "value2"},
+			},
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(&kvs.DescribeKeyValueStoreOutput{ETag: aws.String("dummy_etag")}, nil)
+
+			puts := []kvsTypes.PutKeyRequestListItem{}
+			for _, item := range c.putList {
+				puts = append(puts, kvsTypes.PutKeyRequestListItem{
+					Key:   aws.String(item.Key),
+					Value: aws.String(item.Value),
+				})
+			}
+
+			deletes := []kvsTypes.DeleteKeyRequestListItem{}
+			for _, item := range c.deleteList {
+				deletes = append(deletes, kvsTypes.DeleteKeyRequestListItem{
+					Key: aws.String(item.Key),
+				})
+			}
+
+			m.EXPECT().
+				UpdateKeys(gomock.Any(), &kvs.UpdateKeysInput{
+					IfMatch: aws.String("dummy_etag"),
+					KvsARN:  aws.String(c.kvsARN),
+					Puts:    puts,
+					Deletes: deletes,
+				}).
+				Return(c.kvscOut.Out, c.kvscOut.Error)
+
+			got, err := libs.SyncItems(context.Background(), m, c.kvsARN, c.putList, c.deleteList)
 			if c.wantErr {
 				asst.Error(err)
 				asst.Nil(got)
