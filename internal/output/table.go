@@ -2,7 +2,7 @@ package output
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"reflect"
 
 	"github.com/jedib0t/go-pretty/table"
@@ -167,7 +167,7 @@ func toTables(data any) ([]Table, error) {
 	}
 }
 
-func RenderAsTable(data any) error {
+func RenderAsTable(data any, o io.Writer) error {
 	tables, err := toTables(data)
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func RenderAsTable(data any) error {
 	for _, tableData := range tables {
 		// render descriptions
 		for _, desc := range tableData.Descriptions {
-			os.Stdout.WriteString(desc + "\n")
+			_, _ = o.Write([]byte(desc + "\n"))
 		}
 
 		if len(tableData.Headers) == 0 || len(tableData.Rows) == 0 {
@@ -184,7 +184,7 @@ func RenderAsTable(data any) error {
 		}
 
 		t := table.NewWriter()
-		t.SetOutputMirror(os.Stdout)
+		t.SetOutputMirror(o)
 		for _, header := range tableData.Headers {
 			t.AppendHeader(header)
 		}

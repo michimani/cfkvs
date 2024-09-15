@@ -1,5 +1,7 @@
 package output
 
+import "os"
+
 type OutputType string
 
 const (
@@ -10,10 +12,10 @@ const (
 func Render(data any, outputType OutputType) error {
 	switch outputType {
 	case OutputTypeJson:
-		return RenderAsJson(data)
+		return RenderAsJson(data, os.Stdout)
 	case OutputTypeTable:
-		return RenderAsTable(data)
+		return RenderAsTable(data, os.Stdout)
 	default:
-		return RenderAsTable(data)
+		return RenderAsTable(data, os.Stdout)
 	}
 }

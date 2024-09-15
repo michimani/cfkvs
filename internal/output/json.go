@@ -2,19 +2,22 @@ package output
 
 import (
 	"encoding/json"
-	"os"
+	"io"
 )
 
 const jsonOutputIndent = "    " // 4 spaces
 
-func RenderAsJson(data any) error {
+func RenderAsJson(data any, o io.Writer) error {
 	out, err := json.MarshalIndent(&data, "", jsonOutputIndent)
 	if err != nil {
 		return err
 	}
 
-	os.Stdout.Write(out)
-	os.Stdout.Write([]byte("\n"))
+	if _, err := o.Write(out); err != nil {
+		return err
+	}
+
+	_, _ = o.Write([]byte("\n"))
 
 	return nil
 }
