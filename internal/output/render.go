@@ -1,5 +1,7 @@
 package output
 
+import "io"
+
 type OutputType string
 
 const (
@@ -7,13 +9,13 @@ const (
 	OutputTypeTable OutputType = "table"
 )
 
-func Render(data any, outputType OutputType) error {
+func Render(data any, outputType OutputType, w io.Writer) error {
 	switch outputType {
 	case OutputTypeJson:
-		return RenderAsJson(data)
+		return RenderAsJson(data, w)
 	case OutputTypeTable:
-		return RenderAsTable(data)
+		return RenderAsTable(data, w)
 	default:
-		return RenderAsTable(data)
+		return RenderAsTable(data, w)
 	}
 }
