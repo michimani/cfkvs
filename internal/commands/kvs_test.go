@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
 	"github.com/michimani/cfkvs/internal/commands"
 	"github.com/michimani/cfkvs/libs"
 	"github.com/stretchr/testify/assert"
@@ -166,6 +167,139 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 			cfcMock := c.cfcMock(ctrl)
 			globals := &commands.Globals{
 				CloudFrontClient: cfcMock,
+			}
+
+			err := c.cmd.Run(globals)
+			if c.wantError {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+		})
+	}
+}
+
+func Test_InfoSubCmd_Run(t *testing.T) {
+	cases := []struct {
+		name      string
+		cmd       *commands.InfoSubCmd
+		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
+		kvscMock  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient
+		wantError bool
+	}{
+		{
+			name: "ok",
+			cmd:  &commands.InfoSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						KeyValueStore: &cfTypes.KeyValueStore{
+							Id:      aws.String("id"),
+							Name:    aws.String("name"),
+							Comment: aws.String("comment"),
+							Status:  aws.String("status"),
+							ARN:     aws.String("arn"),
+						},
+					}, nil)
+				return m
+			},
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&kvs.DescribeKeyValueStoreOutput{
+						KvsARN: aws.String("kvs-arn"),
+					}, nil)
+				return m
+			},
+			wantError: false,
+		},
+		{
+			name: "error: cloudfront.DescribeKeyValueStore returns error",
+			cmd:  &commands.InfoSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: cloudfront.DescribeKeyValueStore invalid output",
+			cmd:  &commands.InfoSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						KeyValueStore: nil,
+					}, nil)
+				return m
+			},
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: cloudfrontkeyvaluestore.DescribeKeyValueStore returns error",
+			cmd:  &commands.InfoSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						KeyValueStore: &cfTypes.KeyValueStore{
+							Id:      aws.String("id"),
+							Name:    aws.String("name"),
+							Comment: aws.String("comment"),
+							Status:  aws.String("status"),
+							ARN:     aws.String("arn"),
+						},
+					}, nil)
+				return m
+			},
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+		{
+			name: "error: cloudfrontkeyvaluestore.DescribeKeyValueStore invalid output",
+			cmd:  &commands.InfoSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						KeyValueStore: &cfTypes.KeyValueStore{
+							Id:      aws.String("id"),
+							Name:    aws.String("name"),
+							Comment: aws.String("comment"),
+							Status:  aws.String("status"),
+							ARN:     aws.String("arn"),
+						},
+					}, nil)
+				return m
+			},
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(nil, nil)
+				return m
+			},
+			wantError: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			ctrl := gomock.NewController(tt)
+			cfcMock := c.cfcMock(ctrl)
+			kvscMock := c.kvscMock(ctrl)
+			globals := &commands.Globals{
+				CloudFrontClient:              cfcMock,
+				CloudFrontKeyValueStoreClient: kvscMock,
 			}
 
 			err := c.cmd.Run(globals)

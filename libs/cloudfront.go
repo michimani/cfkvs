@@ -93,6 +93,12 @@ func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc Cloud
 	if err != nil {
 		return nil, err
 	}
+	if cOut.KeyValueStore == nil {
+		return nil, fmt.Errorf("cloudfront.DescribeKeyValueStoreOutput is nil")
+	}
+	if cOut.KeyValueStore == nil {
+		return nil, fmt.Errorf("cloudfront.DescribeKeyValueStoreOutput.KeyValueStore is nil")
+	}
 
 	kvsIn := &kvs.DescribeKeyValueStoreInput{
 		KvsARN: cOut.KeyValueStore.ARN,
@@ -100,6 +106,9 @@ func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc Cloud
 	kvsOut, err := kvsc.DescribeKeyValueStore(ctx, kvsIn)
 	if err != nil {
 		return nil, err
+	}
+	if kvsOut == nil {
+		return nil, fmt.Errorf("cloudfrontkeyvaluestore.DescribeKeyValueStoreOutput is nil")
 	}
 
 	return &types.KeyValueStoreFull{
