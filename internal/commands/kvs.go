@@ -48,7 +48,7 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 }
 
 func (c *CreateSubCmd) Run(globals *Globals) error {
-	var srcS3 *libs.KVSImportSourceS3 = nil
+	srcS3 := new(libs.KVSImportSourceS3)
 	if c.Bucket != "" {
 		if c.ObjectKey == "" {
 			return errors.New("object-key is required when bucket is specified")

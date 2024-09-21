@@ -45,6 +45,10 @@ func (k *KVS) Parse(o any) error {
 
 	switch o := o.(type) {
 	case *cf.CreateKeyValueStoreOutput:
+		if o.KeyValueStore == nil {
+			return fmt.Errorf("KeyValueStore is nil")
+		}
+
 		k.Id = aws.ToString(o.KeyValueStore.Id)
 		k.Name = aws.ToString(o.KeyValueStore.Name)
 		k.Comment = aws.ToString(o.KeyValueStore.Comment)
@@ -53,6 +57,10 @@ func (k *KVS) Parse(o any) error {
 		return nil
 
 	case *cf.DescribeKeyValueStoreOutput:
+		if o.KeyValueStore == nil {
+			return fmt.Errorf("KeyValueStore is nil")
+		}
+
 		k.Id = aws.ToString(o.KeyValueStore.Id)
 		k.Name = aws.ToString(o.KeyValueStore.Name)
 		k.Comment = aws.ToString(o.KeyValueStore.Comment)
