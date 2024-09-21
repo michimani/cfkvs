@@ -30,12 +30,7 @@ type InfoSubCmd struct {
 }
 
 func (c *ListKvsSubCmd) Run(globals *Globals) error {
-	cfc, err := libs.NewCloudFrontClient(context.TODO())
-	if err != nil {
-		return err
-	}
-
-	out, err := libs.ListKvs(context.TODO(), cfc)
+	out, err := libs.ListKvs(context.TODO(), globals.CloudFrontClient)
 	if err != nil {
 		return err
 	}
@@ -53,11 +48,6 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 }
 
 func (c *CreateSubCmd) Run(globals *Globals) error {
-	cfc, err := libs.NewCloudFrontClient(context.TODO())
-	if err != nil {
-		return err
-	}
-
 	var srcS3 *libs.KVSImportSourceS3 = nil
 	if c.Bucket != "" {
 		if c.ObjectKey == "" {
@@ -70,7 +60,7 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		}
 	}
 
-	out, err := libs.CreateKvs(context.TODO(), cfc, c.Name, c.Comment, srcS3)
+	out, err := libs.CreateKvs(context.TODO(), globals.CloudFrontClient, c.Name, c.Comment, srcS3)
 	if err != nil {
 		return err
 	}
@@ -88,18 +78,11 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 }
 
 func (c *InfoSubCmd) Run(globals *Globals) error {
-	ctx := context.TODO()
-	cfc, err := libs.NewCloudFrontClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	info, err := libs.DescribeKeyValueStore(ctx, cfc, kvsc, c.Name)
+	info, err := libs.DescribeKeyValueStore(
+		context.TODO(),
+		globals.CloudFrontClient,
+		globals.CloudFrontKeyValueStoreClient,
+		c.Name)
 	if err != nil {
 		return err
 	}

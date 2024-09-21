@@ -47,12 +47,7 @@ type SyncSubCmd struct {
 	Yes       bool   `name:"yes" short:"y" help:"Execute sync. If not specified, only show the items to be synced."`
 }
 
-func getKvsArn(ctx context.Context, kvsName string) (string, error) {
-	cfc, err := libs.NewCloudFrontClient(ctx)
-	if err != nil {
-		return "", err
-	}
-
+func getKvsArn(ctx context.Context, cfc libs.CloudFrontClient, kvsName string) (string, error) {
 	kvsARN, err := libs.GetKeyValueStoreArn(ctx, cfc, kvsName)
 	if err != nil {
 		return "", err
@@ -67,17 +62,12 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
 	if err != nil {
 		return err
 	}
 
-	kvsARN, err := getKvsArn(ctx, c.KvsName)
-	if err != nil {
-		return err
-	}
-
-	out, err := libs.ListItems(ctx, kvsc, kvsARN)
+	out, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
 	if err != nil {
 		return err
 	}
@@ -103,17 +93,12 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
 	if err != nil {
 		return err
 	}
 
-	kvsARN, err := getKvsArn(ctx, c.KvsName)
-	if err != nil {
-		return err
-	}
-
-	out, err := libs.GetItem(ctx, kvsc, kvsARN, c.Key)
+	out, err := libs.GetItem(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN, c.Key)
 	if err != nil {
 		return err
 	}
@@ -142,17 +127,12 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
 	if err != nil {
 		return err
 	}
 
-	kvsARN, err := getKvsArn(ctx, c.KvsName)
-	if err != nil {
-		return err
-	}
-
-	out, err := libs.PutItem(ctx, kvsc, kvsARN, c.Key, c.Value)
+	out, err := libs.PutItem(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN, c.Key, c.Value)
 	if err != nil {
 		return err
 	}
@@ -178,17 +158,12 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
 	if err != nil {
 		return err
 	}
 
-	kvsARN, err := getKvsArn(ctx, c.KvsName)
-	if err != nil {
-		return err
-	}
-
-	out, err := libs.DeleteItem(ctx, kvsc, kvsARN, c.Key)
+	out, err := libs.DeleteItem(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN, c.Key)
 	if err != nil {
 		return err
 	}
@@ -223,18 +198,13 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsc, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	kvsARN, err := getKvsArn(ctx, c.KvsName)
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
 	if err != nil {
 		return err
 	}
 
 	// get before items
-	beforeOut, err := libs.ListItems(ctx, kvsc, kvsARN)
+	beforeOut, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
 	if err != nil {
 		return err
 	}
@@ -252,12 +222,7 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 		}
 	} else {
 		// from S3
-		s3c, err := libs.NewS3Client(ctx)
-		if err != nil {
-			return err
-		}
-
-		if afterItems, err = libs.GetKeyValueStoreData(ctx, s3c, c.Bucket, c.ObjectKey); err != nil {
+		if afterItems, err = libs.GetKeyValueStoreData(ctx, globals.S3Client, c.Bucket, c.ObjectKey); err != nil {
 			return err
 		}
 	}
@@ -273,7 +238,7 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	}
 
 	// sync
-	out, err := libs.SyncItems(ctx, kvsc, kvsARN, diff.PutList(), diff.DeleteList())
+	out, err := libs.SyncItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN, diff.PutList(), diff.DeleteList())
 	if err != nil {
 		return err
 	}
