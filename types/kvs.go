@@ -80,6 +80,10 @@ func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 		return fmt.Errorf("KVSList is nil")
 	}
 
+	if o.KeyValueStoreList == nil {
+		return fmt.Errorf("KeyValueStoreList is nil")
+	}
+
 	for _, kvs := range o.KeyValueStoreList.Items {
 		k := KVS{}
 		if err := k.Parse(&kvs); err != nil {

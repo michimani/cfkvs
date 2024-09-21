@@ -188,6 +188,14 @@ func Test_KVSList_Parse(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "nil KeyValueStoreList",
+			kl:   &types.KVSList{},
+			o: &cf.ListKeyValueStoresOutput{
+				KeyValueStoreList: nil,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, c := range cases {

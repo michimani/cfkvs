@@ -1,0 +1,77 @@
+package commands_test
+
+import (
+	"errors"
+	"testing"
+
+	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
+	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	"github.com/michimani/cfkvs/internal/commands"
+	"github.com/michimani/cfkvs/libs"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+)
+
+func Test_ListKvsSubCmd_Run(t *testing.T) {
+	cases := []struct {
+		name      string
+		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
+		wantError bool
+	}{
+		{
+			name: "ok",
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				cfcMock := libs.NewMockCloudFrontClient(ctrl)
+				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
+					&cf.ListKeyValueStoresOutput{
+						KeyValueStoreList: &cfTypes.KeyValueStoreList{
+							Items: []cfTypes.KeyValueStore{},
+						},
+					}, nil)
+				return cfcMock
+			},
+			wantError: false,
+		},
+		{
+			name: "error: ListKeyValueStores returns error",
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				cfcMock := libs.NewMockCloudFrontClient(ctrl)
+				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return cfcMock
+			},
+			wantError: true,
+		},
+		{
+			name: "error: ListKeyValueStores invalid output",
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				cfcMock := libs.NewMockCloudFrontClient(ctrl)
+				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
+					&cf.ListKeyValueStoresOutput{
+						KeyValueStoreList: nil,
+					}, nil)
+				return cfcMock
+			},
+			wantError: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			ctrl := gomock.NewController(tt)
+			cfcMock := c.cfcMock(ctrl)
+			globals := &commands.Globals{
+				CloudFrontClient: cfcMock,
+			}
+
+			err := (&commands.ListKvsSubCmd{}).Run(globals)
+			if c.wantError {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+		})
+	}
+}
