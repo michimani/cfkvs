@@ -23,35 +23,35 @@ func Test_ListKvsSubCmd_Run(t *testing.T) {
 		{
 			name: "ok",
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
 					&cf.ListKeyValueStoresOutput{
 						KeyValueStoreList: &cfTypes.KeyValueStoreList{
 							Items: []cfTypes.KeyValueStore{},
 						},
 					}, nil)
-				return cfcMock
+				return m
 			},
 			wantError: false,
 		},
 		{
 			name: "error: ListKeyValueStores returns error",
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-				return cfcMock
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
 			},
 			wantError: true,
 		},
 		{
 			name: "error: ListKeyValueStores invalid output",
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).Return(
 					&cf.ListKeyValueStoresOutput{
 						KeyValueStoreList: nil,
 					}, nil)
-				return cfcMock
+				return m
 			},
 			wantError: true,
 		},
@@ -89,8 +89,8 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 			name: "ok",
 			cmd:  &commands.CreateSubCmd{},
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any()).Return(
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any()).Return(
 					&cf.CreateKeyValueStoreOutput{
 						KeyValueStore: &cfTypes.KeyValueStore{
 							Id:      aws.String("id"),
@@ -100,7 +100,7 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 							ARN:     aws.String("arn"),
 						},
 					}, nil)
-				return cfcMock
+				return m
 			},
 			wantError: false,
 		},
@@ -111,8 +111,8 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 				ObjectKey: "object-key",
 			},
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any()).Return(
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any()).Return(
 					&cf.CreateKeyValueStoreOutput{
 						KeyValueStore: &cfTypes.KeyValueStore{
 							Id:      aws.String("id"),
@@ -122,7 +122,7 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 							ARN:     aws.String("arn"),
 						},
 					}, nil)
-				return cfcMock
+				return m
 			},
 			wantError: false,
 		},
@@ -138,9 +138,9 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 			name: "error: CreateKeyValueStore returns error",
 			cmd:  &commands.CreateSubCmd{},
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-				return cfcMock
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
 			},
 			wantError: true,
 		},
@@ -148,12 +148,12 @@ func Test_CreateSubCmd_Ruh(t *testing.T) {
 			name: "error: CreateKeyValueStore invalid output",
 			cmd:  &commands.CreateSubCmd{},
 			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
-				cfcMock := libs.NewMockCloudFrontClient(ctrl)
-				cfcMock.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().CreateKeyValueStore(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&cf.CreateKeyValueStoreOutput{
 						KeyValueStore: nil,
 					}, nil)
-				return cfcMock
+				return m
 			},
 			wantError: true,
 		},
