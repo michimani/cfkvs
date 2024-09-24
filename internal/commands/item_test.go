@@ -329,7 +329,92 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
 		kvscMock  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient
 		wantError bool
-	}{}
+	}{
+		{
+			name: "ok",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(&kvs.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().DeleteKey(gomock.Any(), gomock.Any()).
+					Return(&kvs.DeleteKeyOutput{
+						ItemCount:        aws.Int32(1),
+						TotalSizeInBytes: aws.Int64(1024),
+					}, nil)
+				return m
+			},
+		},
+		{
+			name: "error: kvsName is empty",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "",
+				Key:     "key",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: key is empty",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "kvs-name",
+				Key:     "",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: getKvsArn returns error",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+			},
+			cfcMock:   errorMockCloudFrontClient,
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: libs.DeleteItem returns error (failed to get ETag)",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+		{
+			name: "error: libs.DeleteItem returns error (failed to delete item)",
+			cmd: &commands.DeleteSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(&kvs.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().DeleteKey(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(tt *testing.T) {
