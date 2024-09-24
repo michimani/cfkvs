@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.4](https://github.com/michimani/cfkvs/compare/v0.1.3...v0.1.4) - 2024-09-24
+- chore: add libs tests by @michimani in https://github.com/michimani/cfkvs/pull/37
+- chore: add tests for internal/output by @michimani in https://github.com/michimani/cfkvs/pull/40
+- chore: add tests for internal/commands by @michimani in https://github.com/michimani/cfkvs/pull/42
+
 ## [v0.1.3](https://github.com/michimani/cfkvs/compare/v0.1.2...v0.1.3) - 2024-09-12
 - feat: sync items with a JSON file by @michimani in https://github.com/michimani/cfkvs/pull/34
 
