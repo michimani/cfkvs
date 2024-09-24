@@ -37,6 +37,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
         if: ${{ steps.tagpr.outputs.tag != '' || github.event_name == 'workflow_dispatch' }}
 
       - name: Run GoReleaser
