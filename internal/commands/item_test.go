@@ -1,8 +1,14 @@
 package commands_test
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	cf "github.com/aws/aws-sdk-go-v2/service/cloudfront"
+	cfTypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	kvs "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
+	kvsTypes "github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore/types"
 	"github.com/michimani/cfkvs/internal/commands"
 	"github.com/michimani/cfkvs/libs"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +22,85 @@ func Test_ListItemsSubCmd_Run(t *testing.T) {
 		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
 		kvscMock  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient
 		wantError bool
-	}{}
+	}{
+		{
+			name: "ok",
+			cmd: &commands.ListItemsSubCmd{
+				KvsName: "kvs-name",
+			},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).
+					Return(&cf.ListKeyValueStoresOutput{
+						KeyValueStoreList: &cfTypes.KeyValueStoreList{
+							Items: []cfTypes.KeyValueStore{
+								{Name: aws.String("kvs-name"), ARN: aws.String("kvs-arn")},
+							},
+						},
+					}, nil)
+				return m
+			},
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().ListKeys(gomock.Any(), gomock.Any()).
+					Return(&kvs.ListKeysOutput{
+						Items: []kvsTypes.ListKeysResponseListItem{},
+					}, nil)
+				return m
+			},
+		},
+		{
+			name: "error: kvsName is empty",
+			cmd: &commands.ListItemsSubCmd{
+				KvsName: "",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: getKvsArn returns error",
+			cmd: &commands.ListItemsSubCmd{
+				KvsName: "kvs-name",
+			},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).
+					Return(
+						&cf.ListKeyValueStoresOutput{
+							KeyValueStoreList: &cfTypes.KeyValueStoreList{},
+						}, nil,
+					)
+				return m
+			},
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: libs.ListItems returns error",
+			cmd: &commands.ListItemsSubCmd{
+				KvsName: "kvs-name",
+			},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().ListKeyValueStores(gomock.Any(), gomock.Any()).
+					Return(&cf.ListKeyValueStoresOutput{
+						KeyValueStoreList: &cfTypes.KeyValueStoreList{
+							Items: []cfTypes.KeyValueStore{
+								{Name: aws.String("kvs-name"), ARN: aws.String("kvs-arn")},
+							},
+						},
+					}, nil)
+				return m
+			},
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().ListKeys(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(tt *testing.T) {
