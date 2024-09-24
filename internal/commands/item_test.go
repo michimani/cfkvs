@@ -195,7 +195,109 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
 		kvscMock  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient
 		wantError bool
-	}{}
+	}{
+		{
+			name: "ok",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+				Value:   "value",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(&kvs.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().PutKey(gomock.Any(), gomock.Any()).
+					Return(&kvs.PutKeyOutput{
+						ItemCount:        aws.Int32(1),
+						TotalSizeInBytes: aws.Int64(1024),
+					}, nil)
+				return m
+			},
+		},
+		{
+			name: "error: kvsName is empty",
+			cmd: &commands.PutSubCmd{
+				KvsName: "",
+				Key:     "key",
+				Value:   "value",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: key is empty",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "",
+				Value:   "value",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: value is empty",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+				Value:   "",
+			},
+			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: getKvsArn returns error",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+				Value:   "value",
+			},
+			cfcMock:   errorMockCloudFrontClient,
+			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
+			wantError: true,
+		},
+		{
+			name: "error: libs.PutItem returns error (failed to get ETag)",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+				Value:   "value",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+		{
+			name: "error: libs.PutItem returns error (failed to put item)",
+			cmd: &commands.PutSubCmd{
+				KvsName: "kvs-name",
+				Key:     "key",
+				Value:   "value",
+			},
+			cfcMock: noErrorMockCloudFrontClient,
+			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
+				m := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(&kvs.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().PutKey(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(tt *testing.T) {
