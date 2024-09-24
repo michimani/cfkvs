@@ -45,6 +45,10 @@ func (k *KVS) Parse(o any) error {
 
 	switch o := o.(type) {
 	case *cf.CreateKeyValueStoreOutput:
+		if o.KeyValueStore == nil {
+			return fmt.Errorf("KeyValueStore is nil")
+		}
+
 		k.Id = aws.ToString(o.KeyValueStore.Id)
 		k.Name = aws.ToString(o.KeyValueStore.Name)
 		k.Comment = aws.ToString(o.KeyValueStore.Comment)
@@ -53,6 +57,10 @@ func (k *KVS) Parse(o any) error {
 		return nil
 
 	case *cf.DescribeKeyValueStoreOutput:
+		if o.KeyValueStore == nil {
+			return fmt.Errorf("KeyValueStore is nil")
+		}
+
 		k.Id = aws.ToString(o.KeyValueStore.Id)
 		k.Name = aws.ToString(o.KeyValueStore.Name)
 		k.Comment = aws.ToString(o.KeyValueStore.Comment)
@@ -78,6 +86,10 @@ type KVSList []KVS
 func (kl *KVSList) Parse(o *cf.ListKeyValueStoresOutput) error {
 	if kl == nil {
 		return fmt.Errorf("KVSList is nil")
+	}
+
+	if o.KeyValueStoreList == nil {
+		return fmt.Errorf("KeyValueStoreList is nil")
 	}
 
 	for _, kvs := range o.KeyValueStoreList.Items {

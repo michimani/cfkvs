@@ -97,6 +97,22 @@ func Test_KVS_Parse(t *testing.T) {
 			o:       "invalid",
 			wantErr: true,
 		},
+		{
+			name: "nil KeyValueStore on CreateKeyValueStoreOutput",
+			k:    &types.KVS{},
+			o: &cf.CreateKeyValueStoreOutput{
+				KeyValueStore: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "nil KeyValueStore on DescribeKeyValueStoreOutput",
+			k:    &types.KVS{},
+			o: &cf.DescribeKeyValueStoreOutput{
+				KeyValueStore: nil,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, c := range cases {
@@ -185,6 +201,14 @@ func Test_KVSList_Parse(t *testing.T) {
 						},
 					},
 				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "nil KeyValueStoreList",
+			kl:   &types.KVSList{},
+			o: &cf.ListKeyValueStoresOutput{
+				KeyValueStoreList: nil,
 			},
 			wantErr: true,
 		},

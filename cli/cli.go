@@ -6,6 +6,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/michimani/cfkvs/internal/commands"
+	"github.com/michimani/cfkvs/libs"
 )
 
 type CLI struct {
@@ -38,8 +39,56 @@ func Run(ctx context.Context) error {
 		kong.Vars{
 			"version": versionString,
 		})
+
+	if err := setClient(ctx, kctx.Args, &cli.Globals); err != nil {
+		return err
+	}
+
 	err = kctx.Run(&cli.Globals)
 	kctx.FatalIfErrorf(err)
+
+	return nil
+}
+
+var needClientCommands = []string{
+	"item",
+	"kvs",
+}
+
+func setClient(ctx context.Context, args []string, globals *commands.Globals) error {
+	if len(args) == 0 {
+		return nil
+	}
+
+	needClient := false
+	for _, cmd := range needClientCommands {
+		if args[0] == cmd {
+			needClient = true
+			break
+		}
+	}
+
+	if !needClient {
+		return nil
+	}
+
+	s3, err := libs.NewS3Client(ctx)
+	if err != nil {
+		return err
+	}
+	globals.S3Client = s3
+
+	cf, err := libs.NewCloudFrontClient(ctx)
+	if err != nil {
+		return err
+	}
+	globals.CloudFrontClient = cf
+
+	kvs, err := libs.NewCloudFrontKeyValueStoreClient(ctx)
+	if err != nil {
+		return err
+	}
+	globals.CloudFrontKeyValueStoreClient = kvs
 
 	return nil
 }
