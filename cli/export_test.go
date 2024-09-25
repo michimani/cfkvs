@@ -2,6 +2,10 @@ package cli
 
 import "fmt"
 
+var (
+	Exported_setClient = setClient
+)
+
 func SetVersion(v string) {
 	version = v
 }
