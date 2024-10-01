@@ -14,6 +14,7 @@ type KvsCmd struct {
 	List   ListKvsSubCmd `cmd:"" help:"List key value stores in your account."`
 	Create CreateSubCmd  `cmd:"" help:"Create a key value store."`
 	Info   InfoSubCmd    `cmd:"" help:"Show information of the key value store."`
+	Sync   SyncSubCmd    `cmd:"" help:"Sync items in the key value store with S3 object or specified JSON file."`
 }
 
 type ListKvsSubCmd struct{}
@@ -27,6 +28,15 @@ type CreateSubCmd struct {
 
 type InfoSubCmd struct {
 	Name string `name:"name" help:"Name of the key value store." required:""`
+}
+
+type SyncSubCmd struct {
+	Name      string `name:"name" help:"Name of the key value store." required:""`
+	Bucket    string `name:"bucket" help:"S3 bucket name to sync key value store. If you want to sync with S3 object, this is required."`
+	ObjectKey string `name:"object-key" help:"S3 object key to sync key value store. If you want to sync with S3 object, this is required."`
+	File      string `name:"file" help:"Path to the file to sync key value store. If this is specified, sync with this file instead of S3 object."`
+	Delete    bool   `name:"delete" help:"Delete items that are not in the S3 object."`
+	Yes       bool   `name:"yes" short:"y" help:"Execute sync. If not specified, only show the items to be synced."`
 }
 
 func (c *ListKvsSubCmd) Run(globals *Globals) error {
@@ -92,4 +102,75 @@ func (c *InfoSubCmd) Run(globals *Globals) error {
 	}
 
 	return nil
+}
+
+func (c *SyncSubCmd) Run(globals *Globals) error {
+	if c.Name == "" {
+		return errors.New("kvs-name is required")
+	}
+
+	fromFile := false
+	if c.File != "" {
+		fromFile = true
+	} else {
+		if c.Bucket == "" {
+			return errors.New("bucket is required")
+		}
+		if c.ObjectKey == "" {
+			return errors.New("object-key is required")
+		}
+	}
+
+	ctx := context.TODO()
+	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.Name)
+	if err != nil {
+		return err
+	}
+
+	// get before items
+	beforeOut, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
+	if err != nil {
+		return err
+	}
+	before := types.ItemList{}
+	if err := before.Parse(beforeOut); err != nil {
+		return err
+	}
+
+	// get after items
+	afterItems := &types.KeyValueStoreData{}
+	if fromFile {
+		// from the file
+		if afterItems, err = libs.GetKeyValueStoreDataFromFile(c.File); err != nil {
+			return err
+		}
+	} else {
+		// from S3
+		if afterItems, err = libs.GetKeyValueStoreData(ctx, globals.S3Client, c.Bucket, c.ObjectKey); err != nil {
+			return err
+		}
+	}
+
+	// show diff
+	diff := before.Diff(afterItems.ToItemList(), c.Delete)
+	if err := output.Render(diff, output.OutputTypeTable, os.Stdout); err != nil {
+		return err
+	}
+
+	if !c.Yes {
+		return nil
+	}
+
+	// sync
+	out, err := libs.SyncItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN, diff.PutList(), diff.DeleteList())
+	if err != nil {
+		return err
+	}
+
+	kvsSimple := types.KVSSimple{}
+	if err := kvsSimple.Parse(out); err != nil {
+		return err
+	}
+
+	return output.Render(&kvsSimple, globals.Output, os.Stdout)
 }
