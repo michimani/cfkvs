@@ -11,12 +11,12 @@ This is a simple command line tool for CloudFront Key Value Store.
   - list
   - create
   - info
+  - sync
 - Item (Key-Value pair)
   - list
   - get
   - put
   - delete
-  - sync
 
 ### Comparison with AWS CLI commands
 
@@ -33,7 +33,7 @@ This is a simple command line tool for CloudFront Key Value Store.
 | `cloudfront-keyvaluestore list-keys` | `cfkvs item list` |
 | `cloudfront-keyvaluestore put-key` | `cfkvs item put` |
 | `cloudfront-keyvaluestore update-keys` | - |
-| - | `cfkvs item sync` |
+| - | `cfkvs kvs sync` |
 | - | `cfkvs kvs info` |
 
 ## Installation
@@ -63,11 +63,11 @@ Commands:
   kvs list       List key value stores in your account.
   kvs create     Create a key value store.
   kvs info       Show information of the key value store.
+  kvs sync       Sync items in the key value store with S3 object or specified JSON file.
   item list      List items in the key value store.
   item get       Get an item in the key value store.
   item put       Put an item in the key value store.
   item delete    Delete an item in the key value store.
-  item sync      Sync items in the key value store with S3 object or specified JSON file.
 ```
 
 Run `cfkvs <command> --help` for more information on a command.
@@ -103,7 +103,7 @@ Consider synchronizing this KeyValueStore with the data of the following S3 obje
 You can check the changes in the KeyValueStore by synchronizing it with `data.json` using the following command.
 
 ```bash
-$ cfkvs item sync \
+$ cfkvs kvs sync \
 --kvs-name='cf-kvs-sample' \
 --bucket="${YOUR_BUCKET_NAME}" \
 --key='data.json'
@@ -130,8 +130,8 @@ $ cfkvs item sync \
 If you want to delete keys that do not exist in `data.json`, add the `--delete` flag.
 
 ```bash
-$ cfkvs item sync \
---kvs-name='cf-kvs-sample' \
+$ cfkvs kvs sync \
+--name='cf-kvs-sample' \
 --bucket="${YOUR_BUCKET_NAME}" \
 --key='data.json' \
 --delete
@@ -163,8 +163,8 @@ $ cfkvs item sync \
 If you add the `--yes` or `-y` flag, the synchronization will actually be executed.
 
 ```bash
-$ cfkvs item sync \
---kvs-name='cf-kvs-sample' \
+$ cfkvs kvs sync \
+--name='cf-kvs-sample' \
 --bucket="${YOUR_BUCKET_NAME}" \
 --key='data.json' \
 --delete \
@@ -179,8 +179,8 @@ If you specify the `--file` flag and `--bucket` and `--key` at the same time, th
 
 
 ```bash
-$ cfkvs item sync \
---kvs-name='cf-kvs-sample' \
+$ cfkvs kvs sync \
+--name='cf-kvs-sample' \
 --file='./path/to/data.json'
 ```
 
