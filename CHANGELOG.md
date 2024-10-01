@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.2.0](https://github.com/michimani/cfkvs/compare/v0.1.4...v0.2.0) - 2024-10-01
+- chore: add tests for cli by @michimani in https://github.com/michimani/cfkvs/pull/44
+- change: move sync sub-command to under the kvs command by @michimani in https://github.com/michimani/cfkvs/pull/47
+- chore: add output target to globals by @michimani in https://github.com/michimani/cfkvs/pull/49
+
 ## [v0.1.4](https://github.com/michimani/cfkvs/compare/v0.1.3...v0.1.4) - 2024-09-24
 - chore: add libs tests by @michimani in https://github.com/michimani/cfkvs/pull/37
 - chore: add tests for internal/output by @michimani in https://github.com/michimani/cfkvs/pull/40
