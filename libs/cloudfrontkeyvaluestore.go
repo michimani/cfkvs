@@ -29,11 +29,34 @@ type CloudFrontKeyValueStoreClient interface {
 	DescribeKeyValueStore(ctx context.Context, params *kvs.DescribeKeyValueStoreInput, optFns ...func(*kvs.Options)) (*kvs.DescribeKeyValueStoreOutput, error)
 }
 
-func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*kvs.ListKeysOutput, error) {
+func ListItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*types.ItemList, error) {
 	input := &kvs.ListKeysInput{
 		KvsARN: aws.String(kvsARN),
 	}
-	return c.ListKeys(ctx, input)
+
+	items := []types.Item{}
+	for {
+		out, err := c.ListKeys(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range out.Items {
+			items = append(items, types.Item{
+				Key:   aws.ToString(item.Key),
+				Value: aws.ToString(item.Value),
+			})
+		}
+
+		input.NextToken = out.NextToken
+		if input.NextToken == nil {
+			break
+		}
+	}
+
+	itemList := types.NewItemList(items)
+
+	return itemList, nil
 }
 
 func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.GetKeyOutput, error) {

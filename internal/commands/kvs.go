@@ -127,12 +127,8 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	}
 
 	// get before items
-	beforeOut, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
+	before, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
 	if err != nil {
-		return err
-	}
-	before := types.ItemList{}
-	if err := before.Parse(beforeOut); err != nil {
 		return err
 	}
 

@@ -56,17 +56,12 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	out, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
+	itemList, err := libs.ListItems(ctx, globals.CloudFrontKeyValueStoreClient, kvsARN)
 	if err != nil {
 		return err
 	}
 
-	itemList := types.ItemList{}
-	if err := itemList.Parse(out); err != nil {
-		return err
-	}
-
-	if err := output.Render(&itemList, globals.Output, globals.OutputTarget); err != nil {
+	if err := output.Render(itemList, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
