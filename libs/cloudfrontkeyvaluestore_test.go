@@ -134,7 +134,7 @@ func Test_ListItems(t *testing.T) {
 			Error error
 		}
 		kvsARN  string
-		expect  *kvs.ListKeysOutput
+		expect  *types.ItemList
 		wantErr bool
 	}{
 		{
@@ -151,11 +151,9 @@ func Test_ListItems(t *testing.T) {
 				Error: nil,
 			},
 			kvsARN: "dummy_arn",
-			expect: &kvs.ListKeysOutput{
-				Items: []kvsTypes.ListKeysResponseListItem{
-					{Key: aws.String("key1"), Value: aws.String("value1")},
-				},
-			},
+			expect: types.NewItemList([]types.Item{
+				{Key: "key1", Value: "value1"},
+			}),
 			wantErr: false,
 		},
 		{
