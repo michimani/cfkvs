@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"strings"
@@ -84,6 +85,7 @@ func Test_ListItemsSubCmd_Run(t *testing.T) {
 			globals := &commands.Globals{
 				CloudFrontClient:              cfcMock,
 				CloudFrontKeyValueStoreClient: kvscMock,
+				OutputTarget:                  &bytes.Buffer{},
 			}
 
 			err := c.cmd.Run(globals)
@@ -312,6 +314,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 			globals := &commands.Globals{
 				CloudFrontClient:              cfcMock,
 				CloudFrontKeyValueStoreClient: kvscMock,
+				OutputTarget:                  &bytes.Buffer{},
 			}
 
 			err := c.cmd.Run(globals)
@@ -429,6 +432,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 			globals := &commands.Globals{
 				CloudFrontClient:              cfcMock,
 				CloudFrontKeyValueStoreClient: kvscMock,
+				OutputTarget:                  &bytes.Buffer{},
 			}
 
 			err := c.cmd.Run(globals)

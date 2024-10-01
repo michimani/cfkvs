@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"errors"
-	"os"
 
 	"github.com/michimani/cfkvs/internal/output"
 	"github.com/michimani/cfkvs/libs"
@@ -50,7 +49,7 @@ func (c *ListKvsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvsList, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&kvsList, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -80,7 +79,7 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvs, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&kvs, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -97,7 +96,7 @@ func (c *InfoSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(info, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(info, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -153,7 +152,7 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 
 	// show diff
 	diff := before.Diff(afterItems.ToItemList(), c.Delete)
-	if err := output.Render(diff, output.OutputTypeTable, os.Stdout); err != nil {
+	if err := output.Render(diff, output.OutputTypeTable, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -172,5 +171,5 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	return output.Render(&kvsSimple, globals.Output, os.Stdout)
+	return output.Render(&kvsSimple, globals.Output, globals.OutputTarget)
 }

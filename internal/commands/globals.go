@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/alecthomas/kong"
 	"github.com/michimani/cfkvs/internal/output"
@@ -26,4 +27,5 @@ type Globals struct {
 	S3Client                      libs.S3Client                      `kong:"-"`
 	CloudFrontClient              libs.CloudFrontClient              `kong:"-"`
 	CloudFrontKeyValueStoreClient libs.CloudFrontKeyValueStoreClient `kong:"-"`
+	OutputTarget                  io.Writer                          `kong:"-"`
 }
