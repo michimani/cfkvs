@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/michimani/cfkvs/internal/commands"
@@ -96,7 +97,8 @@ func setClient(ctx context.Context, args []string, globals *commands.Globals) er
 func NewCLI(ctx context.Context) (CLI, error) {
 	cli := CLI{
 		Globals: commands.Globals{
-			Version: commands.VersionFlag(versionString),
+			Version:      commands.VersionFlag(versionString),
+			OutputTarget: os.Stdout,
 		},
 	}
 

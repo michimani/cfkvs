@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"errors"
-	"os"
 
 	"github.com/michimani/cfkvs/internal/output"
 	"github.com/michimani/cfkvs/libs"
@@ -67,7 +66,7 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&itemList, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&itemList, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -98,7 +97,7 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&item, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&item, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -132,7 +131,7 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvsSimple, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&kvsSimple, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
@@ -163,7 +162,7 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	if err := output.Render(&kvsSimple, globals.Output, os.Stdout); err != nil {
+	if err := output.Render(&kvsSimple, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
 
