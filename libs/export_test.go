@@ -1,5 +1,5 @@
 package libs
 
 var (
-	Exported_getETag = getETag
+	Exported_getETagByCloudFrontKeyValueStore = getETagByCloudFrontKeyValueStore
 )
