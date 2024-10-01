@@ -16,6 +16,69 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+func Test_getETagByCloudFront(t *testing.T) {
+	cases := []struct {
+		name   string
+		cfcOut struct {
+			Out   *cloudfront.DescribeKeyValueStoreOutput
+			Error error
+		}
+		kvsName string
+		expect  *string
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out: &cloudfront.DescribeKeyValueStoreOutput{
+					ETag: aws.String("dummy_etag"),
+				},
+				Error: nil,
+			},
+			kvsName: "dummy_name",
+			expect:  aws.String("dummy_etag"),
+			wantErr: false,
+		},
+		{
+			name: "failed to describe key value store",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsName: "dummy_name",
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(c.cfcOut.Out, c.cfcOut.Error)
+
+			got, err := libs.Exported_getETagByCloudFront(context.Background(), m, c.kvsName)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
+		})
+	}
+}
+
 func Test_NewCloudFrontClient(t *testing.T) {
 	cases := []struct {
 		name    string
