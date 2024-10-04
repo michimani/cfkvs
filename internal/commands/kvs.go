@@ -44,7 +44,7 @@ type SyncSubCmd struct {
 }
 
 func (c *ListKVSSubCmd) Run(globals *Globals) error {
-	out, err := libs.ListKVS(context.TODO(), globals.CloudFrontClient)
+	out, err := libs.ListKeyValueStore(context.TODO(), globals.CloudFrontClient)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		}
 	}
 
-	out, err := libs.CreateKVS(context.TODO(), globals.CloudFrontClient, c.Name, c.Comment, srcS3)
+	out, err := libs.CreateKeyValueStore(context.TODO(), globals.CloudFrontClient, c.Name, c.Comment, srcS3)
 	if err != nil {
 		return err
 	}
