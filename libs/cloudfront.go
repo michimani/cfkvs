@@ -114,7 +114,7 @@ func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc Cloud
 	if err != nil {
 		return nil, err
 	}
-	if cOut.KeyValueStore == nil {
+	if cOut == nil {
 		return nil, fmt.Errorf("cloudfront.DescribeKeyValueStoreOutput is nil")
 	}
 	if cOut.KeyValueStore == nil {
