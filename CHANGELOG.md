@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.0](https://github.com/michimani/cfkvs/compare/v0.2.0...v0.3.0) - 2024-10-04
+- fix: list keys with next token by @michimani in https://github.com/michimani/cfkvs/pull/51
+- feature: delete a key value store by @michimani in https://github.com/michimani/cfkvs/pull/54
+- change: change function name by @michimani in https://github.com/michimani/cfkvs/pull/56
+
 ## [v0.2.0](https://github.com/michimani/cfkvs/compare/v0.1.4...v0.2.0) - 2024-10-01
 - chore: add tests for cli by @michimani in https://github.com/michimani/cfkvs/pull/44
 - change: move sync sub-command to under the kvs command by @michimani in https://github.com/michimani/cfkvs/pull/47
