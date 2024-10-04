@@ -412,6 +412,118 @@ func Test_CreateKvs(t *testing.T) {
 	}
 }
 
+func Test_DeleteKeyValueStore(t *testing.T) {
+	cases := []struct {
+		name      string
+		clientOut struct {
+			DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+			Error                      error
+			DescribeKeyValueStoreError error
+		}
+		kvsName string
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  &cloudfront.DeleteKeyValueStoreOutput{},
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: false,
+		},
+		{
+			name: "error: name is empty",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "",
+			wantErr: true,
+		},
+		{
+			name: "error: failed to get etag",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: errors.New("failed to describe key value store"),
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+		{
+			name: "error: failed to delete key value store",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      errors.New("failed to delete key value store"),
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+		{
+			name: "error: cloudfront.DeleteKeyValueStoreOutput is nil",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			ctrl := gomock.NewController(tt)
+			m := libs.NewMockCloudFrontClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(
+					&cloudfront.DescribeKeyValueStoreOutput{ETag: aws.String("etag")},
+					c.clientOut.DescribeKeyValueStoreError)
+
+			if c.clientOut.DescribeKeyValueStoreError == nil {
+				m.EXPECT().
+					DeleteKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(c.clientOut.DeleteKeyValueStoreOutput, c.clientOut.Error)
+			}
+
+			err := libs.DeleteKeyValueStore(context.TODO(), m, c.kvsName)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+		})
+	}
+}
+
 func Test_DescribeKeyValueStore(t *testing.T) {
 	now := time.Now()
 	past := now.AddDate(0, -1, 0)
