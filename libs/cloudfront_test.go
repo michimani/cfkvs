@@ -657,6 +657,28 @@ func Test_DescribeKeyValueStore(t *testing.T) {
 			expect:    nil,
 		},
 		{
+			name: "failed to CloudFront:DescribeKeyValueStore return nil KeyValueStore",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out: &cloudfront.DescribeKeyValueStoreOutput{
+					KeyValueStore: nil,
+				},
+				Error: nil,
+			},
+			kvscOut: struct {
+				Out   *kvs.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   &kvs.DescribeKeyValueStoreOutput{},
+				Error: nil,
+			},
+			kvsName:   "kvs_name",
+			wantError: true,
+			expect:    nil,
+		},
+		{
 			name: "failed to CloudFrontKeyValueStore:DescribeKeyValueStore",
 			cfcOut: struct {
 				Out   *cloudfront.DescribeKeyValueStoreOutput
@@ -721,7 +743,7 @@ func Test_DescribeKeyValueStore(t *testing.T) {
 
 			mkvsc := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
 
-			if c.cfcOut.Error == nil && c.cfcOut.Out != nil {
+			if c.cfcOut.Error == nil && c.cfcOut.Out != nil && c.cfcOut.Out.KeyValueStore != nil {
 				mkvsc.EXPECT().
 					DescribeKeyValueStore(ctx, &kvs.DescribeKeyValueStoreInput{
 						KvsARN: aws.String("arn-for-" + c.kvsName),
