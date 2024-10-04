@@ -309,7 +309,7 @@ func Test_CreateKvs(t *testing.T) {
 		}
 		kvsName string
 		comment string
-		source  libs.KVSImportSource
+		source  func(ctrl *gomock.Controller) libs.KVSImportSource
 		wantErr bool
 	}{
 		{
@@ -352,7 +352,36 @@ func Test_CreateKvs(t *testing.T) {
 			},
 			kvsName: "kvs_name",
 			comment: "kvs_comment",
-			source:  libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"},
+			source: func(ctrl *gomock.Controller) libs.KVSImportSource {
+				return libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"}
+			},
+			wantErr: false,
+		},
+		{
+			name: "ok with other import source",
+			clientOut: struct {
+				CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+				Error                     error
+			}{
+				CreateKeyValueStoreOutput: &cloudfront.CreateKeyValueStoreOutput{
+					KeyValueStore: &cfTypes.KeyValueStore{
+						Id:      aws.String("id"),
+						Name:    aws.String("kvs_name"),
+						Comment: aws.String("kvs_comment"),
+						Status:  aws.String("status"),
+						ARN:     aws.String("arn"),
+					},
+				},
+				Error: nil,
+			},
+			kvsName: "kvs_name",
+			comment: "kvs_comment",
+			source: func(ctrl *gomock.Controller) libs.KVSImportSource {
+				m := libs.NewMockKVSImportSource(ctrl)
+				m.EXPECT().ARN().Return("arn")
+				m.EXPECT().Type().Return(cfTypes.ImportSourceType("type"))
+				return m
+			},
 			wantErr: false,
 		},
 		{
@@ -378,17 +407,13 @@ func Test_CreateKvs(t *testing.T) {
 			ctrl := gomock.NewController(tt)
 			m := libs.NewMockCloudFrontClient(ctrl)
 
+			var s libs.KVSImportSource
 			if c.source != nil {
-				is := new(cfTypes.ImportSource)
-				is.SourceARN = aws.String(c.source.ARN())
-				is.SourceType = c.source.Type()
+				ctrl := gomock.NewController(tt)
+				s = c.source(ctrl)
 
 				m.EXPECT().
-					CreateKeyValueStore(ctx, &cloudfront.CreateKeyValueStoreInput{
-						Name:         &c.kvsName,
-						Comment:      &c.comment,
-						ImportSource: is,
-					}).
+					CreateKeyValueStore(ctx, gomock.Any()).
 					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
 			} else {
 				m.EXPECT().
@@ -399,7 +424,7 @@ func Test_CreateKvs(t *testing.T) {
 					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
 			}
 
-			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, c.source)
+			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, s)
 			if c.wantErr {
 				asst.Error(err)
 				asst.Nil(out)
