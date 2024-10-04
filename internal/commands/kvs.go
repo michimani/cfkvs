@@ -9,15 +9,15 @@ import (
 	"github.com/michimani/cfkvs/types"
 )
 
-type KvsCmd struct {
-	List   ListKvsSubCmd   `cmd:"" help:"List key value stores in your account."`
+type KVSCmd struct {
+	List   ListKVSSubCmd   `cmd:"" help:"List key value stores in your account."`
 	Create CreateSubCmd    `cmd:"" help:"Create a key value store."`
 	Delete DeleteKVSSubCmd `cmd:"" help:"Delete a key value store."`
 	Info   InfoSubCmd      `cmd:"" help:"Show information of the key value store."`
 	Sync   SyncSubCmd      `cmd:"" help:"Sync items in the key value store with S3 object or specified JSON file."`
 }
 
-type ListKvsSubCmd struct{}
+type ListKVSSubCmd struct{}
 
 type CreateSubCmd struct {
 	Name      string `name:"name" help:"Name of the key value store." required:""`
@@ -43,8 +43,8 @@ type SyncSubCmd struct {
 	Yes       bool   `name:"yes" short:"y" help:"Execute sync. If not specified, only show the items to be synced."`
 }
 
-func (c *ListKvsSubCmd) Run(globals *Globals) error {
-	out, err := libs.ListKvs(context.TODO(), globals.CloudFrontClient)
+func (c *ListKVSSubCmd) Run(globals *Globals) error {
+	out, err := libs.ListKeyValueStore(context.TODO(), globals.CloudFrontClient)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (c *CreateSubCmd) Run(globals *Globals) error {
 		}
 	}
 
-	out, err := libs.CreateKvs(context.TODO(), globals.CloudFrontClient, c.Name, c.Comment, srcS3)
+	out, err := libs.CreateKeyValueStore(context.TODO(), globals.CloudFrontClient, c.Name, c.Comment, srcS3)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (c *SyncSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.Name)
+	kvsARN, err := getKVSArn(ctx, globals.CloudFrontClient, c.Name)
 	if err != nil {
 		return err
 	}

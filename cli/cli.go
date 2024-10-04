@@ -13,7 +13,7 @@ import (
 type CLI struct {
 	commands.Globals
 
-	Kvs  commands.KvsCmd  `cmd:"" help:"KeyValueStore operations."`
+	KVS  commands.KVSCmd  `cmd:"" help:"KeyValueStore operations."`
 	Item commands.ItemCmd `cmd:"item" help:"Items in specific KeyValueStore."`
 }
 

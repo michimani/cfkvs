@@ -201,7 +201,7 @@ func Test_GetKeyValueStoreArn(t *testing.T) {
 	}
 }
 
-func Test_ListKvs(t *testing.T) {
+func Test_ListKeyValueStore(t *testing.T) {
 	cases := []struct {
 		name      string
 		clientOut struct {
@@ -245,7 +245,7 @@ func Test_ListKvs(t *testing.T) {
 				ListKeyValueStores(ctx, &cloudfront.ListKeyValueStoresInput{}).
 				Return(c.clientOut.ListKeyValueStoresOutput, c.clientOut.Error)
 
-			out, err := libs.ListKvs(ctx, m)
+			out, err := libs.ListKeyValueStore(ctx, m)
 			if c.wantErr {
 				asst.Error(err)
 				asst.Nil(out)
@@ -300,7 +300,7 @@ func Test_KVSImportSourceS3_Type(t *testing.T) {
 	}
 }
 
-func Test_CreateKvs(t *testing.T) {
+func Test_CreateKeyValueStore(t *testing.T) {
 	cases := []struct {
 		name      string
 		clientOut struct {
@@ -424,7 +424,7 @@ func Test_CreateKvs(t *testing.T) {
 					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
 			}
 
-			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, s)
+			out, err := libs.CreateKeyValueStore(ctx, m, c.kvsName, c.comment, s)
 			if c.wantErr {
 				asst.Error(err)
 				asst.Nil(out)

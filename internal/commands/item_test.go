@@ -30,7 +30,7 @@ func Test_ListItemsSubCmd_Run(t *testing.T) {
 		{
 			name: "ok",
 			cmd: &commands.ListItemsSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
 			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
@@ -45,16 +45,16 @@ func Test_ListItemsSubCmd_Run(t *testing.T) {
 		{
 			name: "error: kvsName is empty",
 			cmd: &commands.ListItemsSubCmd{
-				KvsName: "",
+				KVSName: "",
 			},
 			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
 			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
 			wantError: true,
 		},
 		{
-			name: "error: getKvsArn returns error",
+			name: "error: getKVSArn returns error",
 			cmd: &commands.ListItemsSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 			},
 			cfcMock:   errorMockCloudFrontClient,
 			kvscMock:  func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient { return nil },
@@ -63,7 +63,7 @@ func Test_ListItemsSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.ListItems returns error",
 			cmd: &commands.ListItemsSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
 			kvscMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontKeyValueStoreClient {
@@ -110,7 +110,7 @@ func Test_GetSubCmd_Run(t *testing.T) {
 		{
 			name: "ok",
 			cmd: &commands.GetSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
@@ -127,7 +127,7 @@ func Test_GetSubCmd_Run(t *testing.T) {
 		{
 			name: "error: kvsName is empty",
 			cmd: &commands.GetSubCmd{
-				KvsName: "",
+				KVSName: "",
 				Key:     "key",
 			},
 			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
@@ -137,7 +137,7 @@ func Test_GetSubCmd_Run(t *testing.T) {
 		{
 			name: "error: key is empty",
 			cmd: &commands.GetSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "",
 			},
 			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
@@ -145,9 +145,9 @@ func Test_GetSubCmd_Run(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "error: getKvsArn returns error",
+			name: "error: getKVSArn returns error",
 			cmd: &commands.GetSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock:   errorMockCloudFrontClient,
@@ -157,7 +157,7 @@ func Test_GetSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.GetItem returns error",
 			cmd: &commands.GetSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
@@ -204,7 +204,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "ok",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 				Value:   "value",
 			},
@@ -226,7 +226,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "error: kvsName is empty",
 			cmd: &commands.PutSubCmd{
-				KvsName: "",
+				KVSName: "",
 				Key:     "key",
 				Value:   "value",
 			},
@@ -237,7 +237,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "error: key is empty",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "",
 				Value:   "value",
 			},
@@ -248,7 +248,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "error: value is empty",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 				Value:   "",
 			},
@@ -257,9 +257,9 @@ func Test_PutSubCmd_Run(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "error: getKvsArn returns error",
+			name: "error: getKVSArn returns error",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 				Value:   "value",
 			},
@@ -270,7 +270,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.PutItem returns error (failed to get ETag)",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 				Value:   "value",
 			},
@@ -286,7 +286,7 @@ func Test_PutSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.PutItem returns error (failed to put item)",
 			cmd: &commands.PutSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 				Value:   "value",
 			},
@@ -339,7 +339,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		{
 			name: "ok",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
@@ -360,7 +360,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		{
 			name: "error: kvsName is empty",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "",
+				KVSName: "",
 				Key:     "key",
 			},
 			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
@@ -370,7 +370,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		{
 			name: "error: key is empty",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "",
 			},
 			cfcMock:   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient { return nil },
@@ -378,9 +378,9 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "error: getKvsArn returns error",
+			name: "error: getKVSArn returns error",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock:   errorMockCloudFrontClient,
@@ -390,7 +390,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.DeleteItem returns error (failed to get ETag)",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock: noErrorMockCloudFrontClient,
@@ -405,7 +405,7 @@ func Test_DeleteSubCmd_Run(t *testing.T) {
 		{
 			name: "error: libs.DeleteItem returns error (failed to delete item)",
 			cmd: &commands.DeleteSubCmd{
-				KvsName: "kvs-name",
+				KVSName: "kvs-name",
 				Key:     "key",
 			},
 			cfcMock: noErrorMockCloudFrontClient,

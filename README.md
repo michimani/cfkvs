@@ -23,18 +23,17 @@ This is a simple command line tool for CloudFront Key Value Store.
 | AWS CLI | cfkvs |
 | --- | --- |
 | `cloudfront create-key-value-store` | `cfkvs kvs create` |
-| `cloudfront delete-key-value-store` | - |
-| `cloudfront describe-key-value-store` | - |
+| `cloudfront delete-key-value-store` | `cfkvs kvs delete` |
+| `cloudfront describe-key-value-store` | `cfkvs kvs info` |
 | `cloudfront list-key-value-stores` | `cfkvs kvs list` |
 | `cloudfront update-key-value-store` | - |
 | `cloudfront-keyvaluestore delete-key` | `cfkvs item delete` |
-| `cloudfront-keyvaluestore describe-key-value-store` | - |
+| `cloudfront-keyvaluestore describe-key-value-store` | `cfkvs kvs info` |
 | `cloudfront-keyvaluestore get-key` | `cfkvs item get` |
 | `cloudfront-keyvaluestore list-keys` | `cfkvs item list` |
 | `cloudfront-keyvaluestore put-key` | `cfkvs item put` |
 | `cloudfront-keyvaluestore update-keys` | - |
 | - | `cfkvs kvs sync` |
-| - | `cfkvs kvs info` |
 
 ## Installation
 
