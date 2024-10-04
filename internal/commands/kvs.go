@@ -10,10 +10,11 @@ import (
 )
 
 type KvsCmd struct {
-	List   ListKvsSubCmd `cmd:"" help:"List key value stores in your account."`
-	Create CreateSubCmd  `cmd:"" help:"Create a key value store."`
-	Info   InfoSubCmd    `cmd:"" help:"Show information of the key value store."`
-	Sync   SyncSubCmd    `cmd:"" help:"Sync items in the key value store with S3 object or specified JSON file."`
+	List   ListKvsSubCmd   `cmd:"" help:"List key value stores in your account."`
+	Create CreateSubCmd    `cmd:"" help:"Create a key value store."`
+	Delete DeleteKVSSubCmd `cmd:"" help:"Delete a key value store."`
+	Info   InfoSubCmd      `cmd:"" help:"Show information of the key value store."`
+	Sync   SyncSubCmd      `cmd:"" help:"Sync items in the key value store with S3 object or specified JSON file."`
 }
 
 type ListKvsSubCmd struct{}
@@ -23,6 +24,10 @@ type CreateSubCmd struct {
 	Comment   string `name:"comment" help:"Comment of the key value store."`
 	Bucket    string `name:"bucket" help:"S3 bucket name to import key value store, if you want."`
 	ObjectKey string `name:"object-key" help:"S3 object key to import key value store, if you want."`
+}
+
+type DeleteKVSSubCmd struct {
+	Name string `name:"name" help:"Name of the key value store." required:""`
 }
 
 type InfoSubCmd struct {
@@ -99,6 +104,20 @@ func (c *InfoSubCmd) Run(globals *Globals) error {
 	if err := output.Render(info, globals.Output, globals.OutputTarget); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *DeleteKVSSubCmd) Run(globals *Globals) error {
+	if c.Name == "" {
+		return errors.New("name is required")
+	}
+
+	if err := libs.DeleteKeyValueStore(context.TODO(), globals.CloudFrontClient, c.Name); err != nil {
+		return err
+	}
+
+	_, _ = globals.OutputTarget.Write([]byte("Deleted\n"))
 
 	return nil
 }

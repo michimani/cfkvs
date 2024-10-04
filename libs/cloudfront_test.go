@@ -16,6 +16,69 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+func Test_getETagByCloudFront(t *testing.T) {
+	cases := []struct {
+		name   string
+		cfcOut struct {
+			Out   *cloudfront.DescribeKeyValueStoreOutput
+			Error error
+		}
+		kvsName string
+		expect  *string
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out: &cloudfront.DescribeKeyValueStoreOutput{
+					ETag: aws.String("dummy_etag"),
+				},
+				Error: nil,
+			},
+			kvsName: "dummy_name",
+			expect:  aws.String("dummy_etag"),
+			wantErr: false,
+		},
+		{
+			name: "failed to describe key value store",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: assert.AnError,
+			},
+			kvsName: "dummy_name",
+			expect:  nil,
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+			ctrl := gomock.NewController(tt)
+
+			m := libs.NewMockCloudFrontClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(c.cfcOut.Out, c.cfcOut.Error)
+
+			got, err := libs.Exported_getETagByCloudFront(context.Background(), m, c.kvsName)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+			asst.Equal(c.expect, got)
+		})
+	}
+}
+
 func Test_NewCloudFrontClient(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -246,7 +309,7 @@ func Test_CreateKvs(t *testing.T) {
 		}
 		kvsName string
 		comment string
-		source  libs.KVSImportSource
+		source  func(ctrl *gomock.Controller) libs.KVSImportSource
 		wantErr bool
 	}{
 		{
@@ -289,7 +352,36 @@ func Test_CreateKvs(t *testing.T) {
 			},
 			kvsName: "kvs_name",
 			comment: "kvs_comment",
-			source:  libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"},
+			source: func(ctrl *gomock.Controller) libs.KVSImportSource {
+				return libs.KVSImportSourceS3{Bucket: "bucket", Key: "key"}
+			},
+			wantErr: false,
+		},
+		{
+			name: "ok with other import source",
+			clientOut: struct {
+				CreateKeyValueStoreOutput *cloudfront.CreateKeyValueStoreOutput
+				Error                     error
+			}{
+				CreateKeyValueStoreOutput: &cloudfront.CreateKeyValueStoreOutput{
+					KeyValueStore: &cfTypes.KeyValueStore{
+						Id:      aws.String("id"),
+						Name:    aws.String("kvs_name"),
+						Comment: aws.String("kvs_comment"),
+						Status:  aws.String("status"),
+						ARN:     aws.String("arn"),
+					},
+				},
+				Error: nil,
+			},
+			kvsName: "kvs_name",
+			comment: "kvs_comment",
+			source: func(ctrl *gomock.Controller) libs.KVSImportSource {
+				m := libs.NewMockKVSImportSource(ctrl)
+				m.EXPECT().ARN().Return("arn")
+				m.EXPECT().Type().Return(cfTypes.ImportSourceType("type"))
+				return m
+			},
 			wantErr: false,
 		},
 		{
@@ -315,17 +407,13 @@ func Test_CreateKvs(t *testing.T) {
 			ctrl := gomock.NewController(tt)
 			m := libs.NewMockCloudFrontClient(ctrl)
 
+			var s libs.KVSImportSource
 			if c.source != nil {
-				is := new(cfTypes.ImportSource)
-				is.SourceARN = aws.String(c.source.ARN())
-				is.SourceType = c.source.Type()
+				ctrl := gomock.NewController(tt)
+				s = c.source(ctrl)
 
 				m.EXPECT().
-					CreateKeyValueStore(ctx, &cloudfront.CreateKeyValueStoreInput{
-						Name:         &c.kvsName,
-						Comment:      &c.comment,
-						ImportSource: is,
-					}).
+					CreateKeyValueStore(ctx, gomock.Any()).
 					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
 			} else {
 				m.EXPECT().
@@ -336,7 +424,7 @@ func Test_CreateKvs(t *testing.T) {
 					Return(c.clientOut.CreateKeyValueStoreOutput, c.clientOut.Error)
 			}
 
-			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, c.source)
+			out, err := libs.CreateKvs(ctx, m, c.kvsName, c.comment, s)
 			if c.wantErr {
 				asst.Error(err)
 				asst.Nil(out)
@@ -345,6 +433,118 @@ func Test_CreateKvs(t *testing.T) {
 
 			asst.NoError(err)
 			asst.NotNil(out)
+		})
+	}
+}
+
+func Test_DeleteKeyValueStore(t *testing.T) {
+	cases := []struct {
+		name      string
+		clientOut struct {
+			DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+			Error                      error
+			DescribeKeyValueStoreError error
+		}
+		kvsName string
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  &cloudfront.DeleteKeyValueStoreOutput{},
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: false,
+		},
+		{
+			name: "error: name is empty",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "",
+			wantErr: true,
+		},
+		{
+			name: "error: failed to get etag",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: errors.New("failed to describe key value store"),
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+		{
+			name: "error: failed to delete key value store",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      errors.New("failed to delete key value store"),
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+		{
+			name: "error: cloudfront.DeleteKeyValueStoreOutput is nil",
+			clientOut: struct {
+				DeleteKeyValueStoreOutput  *cloudfront.DeleteKeyValueStoreOutput
+				Error                      error
+				DescribeKeyValueStoreError error
+			}{
+				DeleteKeyValueStoreOutput:  nil,
+				Error:                      nil,
+				DescribeKeyValueStoreError: nil,
+			},
+			kvsName: "kvs_name",
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			ctrl := gomock.NewController(tt)
+			m := libs.NewMockCloudFrontClient(ctrl)
+			m.EXPECT().
+				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
+				Return(
+					&cloudfront.DescribeKeyValueStoreOutput{ETag: aws.String("etag")},
+					c.clientOut.DescribeKeyValueStoreError)
+
+			if c.clientOut.DescribeKeyValueStoreError == nil {
+				m.EXPECT().
+					DeleteKeyValueStore(gomock.Any(), gomock.Any()).
+					Return(c.clientOut.DeleteKeyValueStoreOutput, c.clientOut.Error)
+			}
+
+			err := libs.DeleteKeyValueStore(context.TODO(), m, c.kvsName)
+			if c.wantErr {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
 		})
 	}
 }
@@ -437,6 +637,48 @@ func Test_DescribeKeyValueStore(t *testing.T) {
 			expect:    nil,
 		},
 		{
+			name: "failed to CloudFront:DescribeKeyValueStore return nil output",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: nil,
+			},
+			kvscOut: struct {
+				Out   *kvs.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   &kvs.DescribeKeyValueStoreOutput{},
+				Error: nil,
+			},
+			kvsName:   "kvs_name",
+			wantError: true,
+			expect:    nil,
+		},
+		{
+			name: "failed to CloudFront:DescribeKeyValueStore return nil KeyValueStore",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out: &cloudfront.DescribeKeyValueStoreOutput{
+					KeyValueStore: nil,
+				},
+				Error: nil,
+			},
+			kvscOut: struct {
+				Out   *kvs.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   &kvs.DescribeKeyValueStoreOutput{},
+				Error: nil,
+			},
+			kvsName:   "kvs_name",
+			wantError: true,
+			expect:    nil,
+		},
+		{
 			name: "failed to CloudFrontKeyValueStore:DescribeKeyValueStore",
 			cfcOut: struct {
 				Out   *cloudfront.DescribeKeyValueStoreOutput
@@ -460,6 +702,30 @@ func Test_DescribeKeyValueStore(t *testing.T) {
 			wantError: true,
 			expect:    nil,
 		},
+		{
+			name: "failed to CloudFrontKeyValueStore:DescribeKeyValueStore return nil output",
+			cfcOut: struct {
+				Out   *cloudfront.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out: &cloudfront.DescribeKeyValueStoreOutput{
+					KeyValueStore: &cfTypes.KeyValueStore{
+						ARN: aws.String("arn-for-kvs_name"),
+					},
+				},
+				Error: nil,
+			},
+			kvscOut: struct {
+				Out   *kvs.DescribeKeyValueStoreOutput
+				Error error
+			}{
+				Out:   nil,
+				Error: nil,
+			},
+			kvsName:   "kvs_name",
+			wantError: true,
+			expect:    nil,
+		},
 	}
 
 	for _, c := range cases {
@@ -477,7 +743,7 @@ func Test_DescribeKeyValueStore(t *testing.T) {
 
 			mkvsc := libs.NewMockCloudFrontKeyValueStoreClient(ctrl)
 
-			if c.cfcOut.Error == nil {
+			if c.cfcOut.Error == nil && c.cfcOut.Out != nil && c.cfcOut.Out.KeyValueStore != nil {
 				mkvsc.EXPECT().
 					DescribeKeyValueStore(ctx, &kvs.DescribeKeyValueStoreInput{
 						KvsARN: aws.String("arn-for-" + c.kvsName),

@@ -318,6 +318,81 @@ func Test_InfoSubCmd_Run(t *testing.T) {
 	}
 }
 
+func Test_DeleteKVSSubCmd_Run(t *testing.T) {
+	cases := []struct {
+		name      string
+		cmd       *commands.DeleteKVSSubCmd
+		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
+		wantError bool
+	}{
+		{
+			name: "ok",
+			cmd:  &commands.DeleteKVSSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().DeleteKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DeleteKeyValueStoreOutput{}, nil)
+				return m
+			},
+			wantError: false,
+		},
+		{
+			name: "error: cloudfront.DeleteKeyValueStore returns error",
+			cmd:  &commands.DeleteKVSSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().DeleteKeyValueStore(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				return m
+			},
+			wantError: true,
+		},
+		{
+			name: "error: cloudfront.DeleteKeyValueStore invalid output",
+			cmd:  &commands.DeleteKVSSubCmd{Name: "name"},
+			cfcMock: func(ctrl *gomock.Controller) *libs.MockCloudFrontClient {
+				m := libs.NewMockCloudFrontClient(ctrl)
+				m.EXPECT().DescribeKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					&cf.DescribeKeyValueStoreOutput{
+						ETag: aws.String("etag"),
+					}, nil)
+				m.EXPECT().DeleteKeyValueStore(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+				return m
+			},
+			wantError: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(tt *testing.T) {
+			asst := assert.New(tt)
+
+			ctrl := gomock.NewController(tt)
+			cfcMock := c.cfcMock(ctrl)
+			globals := &commands.Globals{
+				CloudFrontClient: cfcMock,
+				OutputTarget:     &bytes.Buffer{},
+			}
+
+			err := c.cmd.Run(globals)
+			if c.wantError {
+				asst.Error(err)
+				return
+			}
+
+			asst.NoError(err)
+		})
+	}
+}
+
 func Test_SyncSubCmd_Run(t *testing.T) {
 	cases := []struct {
 		name      string

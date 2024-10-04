@@ -25,6 +25,7 @@ func NewCloudFrontClient(ctx context.Context) (*cloudfront.Client, error) {
 type CloudFrontClient interface {
 	ListKeyValueStores(ctx context.Context, params *cloudfront.ListKeyValueStoresInput, optFns ...func(*cloudfront.Options)) (*cloudfront.ListKeyValueStoresOutput, error)
 	CreateKeyValueStore(ctx context.Context, params *cloudfront.CreateKeyValueStoreInput, optFns ...func(*cloudfront.Options)) (*cloudfront.CreateKeyValueStoreOutput, error)
+	DeleteKeyValueStore(ctx context.Context, params *cloudfront.DeleteKeyValueStoreInput, optFns ...func(*cloudfront.Options)) (*cloudfront.DeleteKeyValueStoreOutput, error)
 	DescribeKeyValueStore(ctx context.Context, params *cloudfront.DescribeKeyValueStoreInput, optFns ...func(*cloudfront.Options)) (*cloudfront.DescribeKeyValueStoreOutput, error)
 }
 
@@ -83,6 +84,26 @@ func CreateKvs(ctx context.Context, c CloudFrontClient, name string, comment str
 	return c.CreateKeyValueStore(ctx, input)
 }
 
+func DeleteKeyValueStore(ctx context.Context, c CloudFrontClient, kvsName string) error {
+	eTag, err := getETagByCloudFront(ctx, c, kvsName)
+	if err != nil {
+		return err
+	}
+
+	input := &cloudfront.DeleteKeyValueStoreInput{
+		Name:    aws.String(kvsName),
+		IfMatch: eTag,
+	}
+
+	if out, err := c.DeleteKeyValueStore(ctx, input); err != nil {
+		return err
+	} else if out == nil {
+		return fmt.Errorf("cloudfront.DeleteKeyValueStoreOutput is nil")
+	}
+
+	return nil
+}
+
 // DescribeKeyValueStore describes the key value store.
 // The response of this function is a merge of CloudFront:DescribeKeyValueStore and CloudFrontKeyValueStore:DescribeKeyValueStore.
 func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc CloudFrontKeyValueStoreClient, kvsName string) (*types.KeyValueStoreFull, error) {
@@ -93,7 +114,7 @@ func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc Cloud
 	if err != nil {
 		return nil, err
 	}
-	if cOut.KeyValueStore == nil {
+	if cOut == nil {
 		return nil, fmt.Errorf("cloudfront.DescribeKeyValueStoreOutput is nil")
 	}
 	if cOut.KeyValueStore == nil {
@@ -124,4 +145,16 @@ func DescribeKeyValueStore(ctx context.Context, cfc CloudFrontClient, kvsc Cloud
 		FailureReason:    aws.ToString(kvsOut.FailureReason),
 		ETag:             aws.ToString(cOut.ETag),
 	}, nil
+}
+
+func getETagByCloudFront(ctx context.Context, c CloudFrontClient, name string) (*string, error) {
+	input := &cloudfront.DescribeKeyValueStoreInput{
+		Name: aws.String(name),
+	}
+	out, err := c.DescribeKeyValueStore(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return out.ETag, nil
 }

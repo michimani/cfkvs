@@ -68,7 +68,7 @@ func GetItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key s
 }
 
 func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, value string) (*kvs.PutKeyOutput, error) {
-	eTag, err := getETag(ctx, c, kvsARN)
+	eTag, err := getETagByCloudFrontKeyValueStore(ctx, c, kvsARN)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func PutItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key, 
 }
 
 func DeleteItem(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN, key string) (*kvs.DeleteKeyOutput, error) {
-	eTag, err := getETag(ctx, c, kvsARN)
+	eTag, err := getETagByCloudFrontKeyValueStore(ctx, c, kvsARN)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func SyncItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN stri
 		})
 	}
 
-	eTag, err := getETag(ctx, c, kvsARN)
+	eTag, err := getETagByCloudFrontKeyValueStore(ctx, c, kvsARN)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func SyncItems(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN stri
 	return c.UpdateKeys(ctx, input)
 }
 
-func getETag(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {
+func getETagByCloudFrontKeyValueStore(ctx context.Context, c CloudFrontKeyValueStoreClient, kvsARN string) (*string, error) {
 	input := &kvs.DescribeKeyValueStoreInput{
 		KvsARN: aws.String(kvsARN),
 	}

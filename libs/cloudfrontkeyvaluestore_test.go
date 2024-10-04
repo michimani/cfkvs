@@ -13,7 +13,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-func Test_getETag(t *testing.T) {
+func Test_getETagByCloudFrontKeyValueStore(t *testing.T) {
 	cases := []struct {
 		name    string
 		kvscOut struct {
@@ -64,7 +64,7 @@ func Test_getETag(t *testing.T) {
 				DescribeKeyValueStore(gomock.Any(), gomock.Any()).
 				Return(c.kvscOut.Out, c.kvscOut.Error)
 
-			got, err := libs.Exported_getETag(context.Background(), m, c.kvsARN)
+			got, err := libs.Exported_getETagByCloudFrontKeyValueStore(context.Background(), m, c.kvsARN)
 			if c.wantErr {
 				asst.Error(err)
 				return
