@@ -17,26 +17,26 @@ type ItemCmd struct {
 }
 
 type ListItemsSubCmd struct {
-	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	KVSName string `name:"kvs-name" help:"Name of the key value store." required:""`
 }
 
 type GetSubCmd struct {
-	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	KVSName string `name:"kvs-name" help:"Name of the key value store." required:""`
 	Key     string `name:"key" help:"Key of the item to get." required:""`
 }
 
 type PutSubCmd struct {
-	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	KVSName string `name:"kvs-name" help:"Name of the key value store." required:""`
 	Key     string `name:"key" help:"Key of the item to put." required:""`
 	Value   string `name:"value" help:"Value of the item to put." required:""`
 }
 
 type DeleteSubCmd struct {
-	KvsName string `name:"kvs-name" help:"Name of the key value store." required:""`
+	KVSName string `name:"kvs-name" help:"Name of the key value store." required:""`
 	Key     string `name:"key" help:"Key of the item to delete." required:""`
 }
 
-func getKvsArn(ctx context.Context, cfc libs.CloudFrontClient, kvsName string) (string, error) {
+func getKVSArn(ctx context.Context, cfc libs.CloudFrontClient, kvsName string) (string, error) {
 	kvsARN, err := libs.GetKeyValueStoreArn(ctx, cfc, kvsName)
 	if err != nil {
 		return "", err
@@ -46,12 +46,12 @@ func getKvsArn(ctx context.Context, cfc libs.CloudFrontClient, kvsName string) (
 }
 
 func (c *ListItemsSubCmd) Run(globals *Globals) error {
-	if c.KvsName == "" {
+	if c.KVSName == "" {
 		return errors.New("kvs-name is required")
 	}
 
 	ctx := context.TODO()
-	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
+	kvsARN, err := getKVSArn(ctx, globals.CloudFrontClient, c.KVSName)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (c *ListItemsSubCmd) Run(globals *Globals) error {
 }
 
 func (c *GetSubCmd) Run(globals *Globals) error {
-	if c.KvsName == "" {
+	if c.KVSName == "" {
 		return errors.New("kvs-name is required")
 	}
 	if c.Key == "" {
@@ -77,7 +77,7 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
+	kvsARN, err := getKVSArn(ctx, globals.CloudFrontClient, c.KVSName)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (c *GetSubCmd) Run(globals *Globals) error {
 }
 
 func (c *PutSubCmd) Run(globals *Globals) error {
-	if c.KvsName == "" {
+	if c.KVSName == "" {
 		return errors.New("kvs-name is required")
 	}
 	if c.Key == "" {
@@ -111,7 +111,7 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
+	kvsARN, err := getKVSArn(ctx, globals.CloudFrontClient, c.KVSName)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *PutSubCmd) Run(globals *Globals) error {
 }
 
 func (c *DeleteSubCmd) Run(globals *Globals) error {
-	if c.KvsName == "" {
+	if c.KVSName == "" {
 		return errors.New("kvs-name is required")
 	}
 	if c.Key == "" {
@@ -142,7 +142,7 @@ func (c *DeleteSubCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.TODO()
-	kvsARN, err := getKvsArn(ctx, globals.CloudFrontClient, c.KvsName)
+	kvsARN, err := getKVSArn(ctx, globals.CloudFrontClient, c.KVSName)
 	if err != nil {
 		return err
 	}

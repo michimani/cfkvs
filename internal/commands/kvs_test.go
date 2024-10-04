@@ -16,7 +16,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func Test_ListKvsSubCmd_Run(t *testing.T) {
+func Test_ListKVSSubCmd_Run(t *testing.T) {
 	cases := []struct {
 		name      string
 		cfcMock   func(ctrl *gomock.Controller) *libs.MockCloudFrontClient
@@ -70,7 +70,7 @@ func Test_ListKvsSubCmd_Run(t *testing.T) {
 				OutputTarget:     &bytes.Buffer{},
 			}
 
-			err := (&commands.ListKvsSubCmd{}).Run(globals)
+			err := (&commands.ListKVSSubCmd{}).Run(globals)
 			if c.wantError {
 				asst.Error(err)
 				return
@@ -495,7 +495,7 @@ func Test_SyncSubCmd_Run(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "error: getKvsArn returns error",
+			name: "error: getKVSArn returns error",
 			cmd: &commands.SyncSubCmd{
 				Name: "kvs-name",
 				File: "../../testdata/valid.json",
